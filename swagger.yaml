@@ -106,14 +106,10 @@ definitions:
     type: object
     required:
         - email
-        - password
     properties:
       email:
         type: string
         description: user Email
-      password:
-        type: string
-        description: user Password
 
 schemes:
  - https
