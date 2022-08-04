@@ -1,0 +1,9 @@
+2022-08-04 12:33:49 error: uncaughtException: Request failed with status code 400
+Error: Request failed with status code 400
+    at createError (/Users/amadudurham/workspace/farm-mgmt/node_modules/@mhoc/axios-digest-auth/node_modules/axios/lib/core/createError.js:16:15)
+    at settle (/Users/amadudurham/workspace/farm-mgmt/node_modules/@mhoc/axios-digest-auth/node_modules/axios/lib/core/settle.js:17:12)
+    at IncomingMessage.handleStreamEnd (/Users/amadudurham/workspace/farm-mgmt/node_modules/@mhoc/axios-digest-auth/node_modules/axios/lib/adapters/http.js:293:11)
+    at IncomingMessage.emit (node:events:402:35)
+    at IncomingMessage.emit (node:domain:475:12)
+    at endReadableNT (node:internal/streams/readable:1343:12)
+    at processTicksAndRejections (node:internal/process/task_queues:83:21)

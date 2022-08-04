@@ -28,8 +28,7 @@ class UserService {
     const findUser: User = await this.users.findOne({ email: userData.email });
     if (findUser) throw new HttpException(409, `You're email ${userData.email} already exists`);
 
-    const hashedPassword = await hash(userData.password, 10);
-    const createUserData: User = await this.users.create({ ...userData, password: hashedPassword });
+    const createUserData: User = await this.users.create({ ...userData });
 
     return createUserData;
   }
@@ -42,12 +41,7 @@ class UserService {
       if (findUser && findUser._id != userId) throw new HttpException(409, `You're email ${userData.email} already exists`);
     }
 
-    if (userData.password) {
-      const hashedPassword = await hash(userData.password, 10);
-      userData = { ...userData, password: hashedPassword };
-    }
-
-    const updateUserById: User = await this.users.findByIdAndUpdate(userId, { userData });
+    const updateUserById: User = await this.users.findByIdAndUpdate(userId, { ...userData });
     if (!updateUserById) throw new HttpException(409, "You're not user");
 
     return updateUserById;

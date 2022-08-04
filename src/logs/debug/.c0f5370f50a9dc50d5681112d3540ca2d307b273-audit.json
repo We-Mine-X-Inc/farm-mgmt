@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 30
+    },
+    "auditLog": "/Users/amadudurham/workspace/farm-mgmt/src/logs/debug/.c0f5370f50a9dc50d5681112d3540ca2d307b273-audit.json",
+    "files": [
+        {
+            "date": 1659630611096,
+            "name": "/Users/amadudurham/workspace/farm-mgmt/src/logs/debug/2022-08-04.log",
+            "hash": "4d3c17c98799fc7f9793ac531ac69f6ddadac1a7c006279ebcf2e8a658680799"
+        }
+    ],
+    "hashType": "sha256"
+}
