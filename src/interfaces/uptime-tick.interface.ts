@@ -1,6 +1,6 @@
-import { Types } from 'mongoose';
+import { Types } from "mongoose";
 
 export interface UptimeTick {
-    _id: string;
-    datetime: Date;
+  _id: string;
+  datetime: Date;
 }

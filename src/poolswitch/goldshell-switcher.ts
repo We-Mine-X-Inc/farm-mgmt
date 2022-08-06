@@ -1,8 +1,5 @@
 const axios = require("axios").default;
-import {
-  SwitchPoolParams,
-  SwitchPoolParamsWithoutCompanyPool,
-} from "./common-types";
+import { SwitchPoolParams } from "./common-types";
 
 const GOLDSHELL_DEFAULTS = {
   POOL_PWD: "123",
@@ -10,9 +7,10 @@ const GOLDSHELL_DEFAULTS = {
   MINER_PWD: "123456789",
 };
 
+// Add to Database.
 const COMPANY_POOL = {
   url: "stratum+tcp://kda.ss.poolmars.net:5200",
-  user: "k:fd93de931359a2f15ba2aacdd9525e3783af0e975fe39195ba9f4cf6abeb8ff3+pps.kd6SE_1",
+  user: "k:fd93de931359a2f15ba2aacdd9525e3783af0e975fe39195ba9f4cf6abeb8ff3+pps.kdfee",
 };
 
 type SessionInfo = {
@@ -78,8 +76,6 @@ async function getSettings(
 
 function verifyMinerIsForClient(params: SwitchPoolParams): MinerValidator {
   return (validationInfo: PoolValidationInfo) => {
-    console.log("verifyMinerIsForClient");
-    console.log(validationInfo);
     if (validationInfo.macAddress != params.macAddress) {
       // send an email about miner ip address switching
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
@@ -134,7 +130,6 @@ function addPool(switchPoolInfo: SwitchPoolParams) {
       },
       data: buildNewPool(switchPoolInfo),
     }).then((res) => {
-      console.log(res.data);
       // send successful confirmation email of the miner switched
     });
   };
@@ -144,20 +139,15 @@ function buildNewPool(
   switchPoolInfo: SwitchPoolParams
 ): GoldshellNewMinerPoolInfo {
   return {
-    url: switchPoolInfo.toClientPool
-      ? switchPoolInfo.clientPool.url
-      : switchPoolInfo.companyPool.url,
-    user: switchPoolInfo.toClientPool
-      ? switchPoolInfo.clientPool.user
-      : switchPoolInfo.companyPool.user,
+    url: switchPoolInfo.pool.url,
+    user: switchPoolInfo.pool.username,
     pass: GOLDSHELL_DEFAULTS.POOL_PWD,
   };
 }
 
 export async function switchGoldshellPool(
-  partialParams: SwitchPoolParamsWithoutCompanyPool
+  params: SwitchPoolParams
 ): Promise<any> {
-  const params = { ...partialParams, companyPool: COMPANY_POOL };
   return await loginToMiner(params.ipAddress)
     .then(getSettings)
     .then(verifyMinerIsForClient(params))

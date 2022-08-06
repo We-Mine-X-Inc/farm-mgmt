@@ -14,10 +14,15 @@ class ServerUptimeScheduler {
 
   public uptimeTickService: UptimeTickService = new UptimeTickService();
 
-  public loadTasksDefinitions() {
-    this.scheduler.define(JOB_NAMES.UPTIME_PROBE, async (job) => {
+  constructor() {
+    this.loadTasksDefinitions();
+  }
+
+  private loadTasksDefinitions() {
+    this.scheduler.define(JOB_NAMES.UPTIME_PROBE, async (job, done) => {
       const uptimeTick: CreateUptimeTickDto = { datetime: new Date() };
       await this.uptimeTickService.createUptimeTick(uptimeTick);
+      done();
     });
   }
 
@@ -28,4 +33,6 @@ class ServerUptimeScheduler {
   }
 }
 
-export default ServerUptimeScheduler;
+const serverUptimeScheduler = new ServerUptimeScheduler();
+
+export default serverUptimeScheduler;

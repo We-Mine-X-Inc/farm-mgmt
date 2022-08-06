@@ -1,14 +1,17 @@
 import { model, Schema, Document } from "mongoose";
-import { Miner } from "@interfaces/miners.interface";
-
-enum MinerStatus {
-  UNKNOWN,
-  OFFLINE,
-  ONLINE,
-}
+import {
+  Miner,
+  MinerNetworkStatus,
+  MinerApiType,
+  CoinType,
+} from "@interfaces/miners.interface";
 
 const minerContractSchema: Schema = new Schema({
-  clientTime: {
+  clientMillis: {
+    type: Number,
+    required: true,
+  },
+  companyMillis: {
     type: Number,
     required: true,
   },
@@ -16,19 +19,20 @@ const minerContractSchema: Schema = new Schema({
     type: Date,
     required: true,
   },
-  totalContractHours: {
+  totalContractMillis: {
     type: Number,
     required: true,
   },
 });
 
 const minerStatusSchema: Schema = new Schema({
-  lastOnlineDatetime: {
+  lastOnlineDate: {
     type: Date,
     required: true,
   },
-  status: {
-    type: MinerStatus,
+  networkStatus: {
+    type: Number,
+    enum: MinerNetworkStatus,
     required: true,
   },
 });
@@ -48,11 +52,13 @@ const minerSchema: Schema = new Schema({
     required: true,
   },
   API: {
-    type: String,
+    type: Number,
+    enum: MinerApiType,
     required: true,
   },
   coin: {
-    type: String,
+    type: Number,
+    enum: CoinType,
     required: true,
   },
   contract: minerContractSchema,

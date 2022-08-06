@@ -1,7 +1,7 @@
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
-import { connect, set } from "mongoose";
+import { connect, isValidObjectId, set, Types } from "mongoose";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { NODE_ENV, PORT, LOG_FORMAT } from "@config";
@@ -9,10 +9,10 @@ import { dbConnection } from "@databases";
 import { Routes } from "@interfaces/routes.interface";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
-import Agenda from "agenda";
-import { switchGoldshellPool } from "@poolswitch/goldshell-switcher";
-import { switchAntminerPool } from "./poolswitch/antminer-switcher";
 import poolSwitchScheduler from "./scheduler/pool-switch-scheduler";
+import serverUptimeScheduler from "./scheduler/server-uptime-scheduler";
+import ping from "ping";
+import minerStatusScheduler from "./scheduler/miner-status-scheduler";
 
 class App {
   public app: express.Application;
@@ -50,41 +50,13 @@ class App {
       set("debug", true);
     }
 
-    connect(dbConnection.url, dbConnection.options);
+    connect(dbConnection.url);
   }
 
   private async initiliazeSchedulers() {
-    poolSwitchScheduler.startNewJobs([
-      {
-        minerId: "",
-      },
-    ]);
-    // switchPool({
-    //   ipAddress: "192.168.88.165",
-    //   toClientPool: true,
-    //   clientPool: {
-    //     url: "stratum+tcp://kda.ss.poolmars.net:5200",
-    //     user: "k:0907e28f36919517964993dfbb33fb53d421b0acc41d1c070a41ca0f84083c4b+pps.kdlite_1",
-    //   },
-    //   // clientPool: {
-    //   //   url: "stratum+tcp://kda.ss.poolmars.net:5200",
-    //   //   user: "k:03148fcea3fe47cb800fa66e869795fbaaa402c5f0e4437eb42ddbb613276be1+pps.kd2",
-    //   // },
-    // companyPool: {
-    //   url: "stratum+tcp://kda.ss.poolmars.net:5200",
-    //   user: "k:fd93de931359a2f15ba2aacdd9525e3783af0e975fe39195ba9f4cf6abeb8ff3+pps.kd6SE_1",
-    // },
-    //   macAddress: "",
-    // });
-    switchAntminerPool({
-      ipAddress: "192.168.88.72",
-      toClientPool: true,
-      clientPool: {
-        url: "stratum+tcp://us-east.stratum.slushpool.com:3333",
-        user: "tywright",
-      },
-      macAddress: "3C:A3:08:74:81:87",
-    });
+    await poolSwitchScheduler.resumeServerInterruptedJobs();
+    await serverUptimeScheduler.startJobs();
+    await minerStatusScheduler.startJobs();
   }
 
   private initializeMiddlewares() {

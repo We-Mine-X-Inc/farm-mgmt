@@ -1,8 +1,13 @@
 import { CreatePoolDto } from "@dtos/pools.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { Pool } from "@interfaces/pools.interface";
+import { Pool, PoolPurposeType } from "@interfaces/pools.interface";
 import poolModel from "@models/pools.model";
 import { isEmpty } from "@utils/util";
+
+type RobustFindParams = {
+  minerId: string;
+  purpose: PoolPurposeType;
+};
 
 class PoolService {
   public pools = poolModel;
@@ -21,10 +26,10 @@ class PoolService {
     return findPool;
   }
 
-  public async findPoolByMinerId(minerId: string): Promise<Pool> {
-    if (isEmpty(minerId)) throw new HttpException(400, "You're not minerId");
+  public async findPool(params: RobustFindParams): Promise<Pool> {
+    if (isEmpty(params)) throw new HttpException(400, "You're not minerId");
 
-    const findPool: Pool = await this.pools.findOne({ minerId: minerId });
+    const findPool: Pool = await this.pools.findOne(params);
     if (!findPool) throw new HttpException(409, "You're not pool");
 
     return findPool;
@@ -35,6 +40,7 @@ class PoolService {
 
     const findPool: Pool = await this.pools.findOne({
       minerId: poolData.minerId,
+      purpose: poolData.purpose,
     });
     if (findPool)
       throw new HttpException(
@@ -56,11 +62,12 @@ class PoolService {
     if (poolData.minerId) {
       const findPool: Pool = await this.pools.findOne({
         minerId: poolData.minerId,
+        purpose: poolData.purpose,
       });
       if (findPool && findPool._id != poolId)
         throw new HttpException(
           409,
-          `You specified the wrong miner ${poolData.minerId} for pool updates.`
+          `You specified the wrong miner ${poolData.minerId} and purpose ${poolData.purpose} for pool updates.`
         );
     }
 

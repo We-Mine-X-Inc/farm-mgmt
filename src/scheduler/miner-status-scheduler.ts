@@ -1,5 +1,9 @@
 import { Agenda } from "agenda/es";
 import { dbConnection } from "@databases";
+import ping from "ping";
+import MinerService from "@/services/miners.service";
+import { MinerNetworkStatus } from "@/interfaces/miners.interface";
+import poolSwitchScheduler from "./pool-switch-scheduler";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
@@ -9,23 +13,44 @@ class MinerStatusScheduler {
   private scheduler = new Agenda({
     db: { address: dbConnection.url, collection: "minerStatusJobs" },
   });
+  private minerService = new MinerService();
 
-  // Replace with the miner service
-  // Also, get a handle to the Agenda for miner switching
-  //   public uptimeTickService: UptimeTickService = new UptimeTickService();
+  constructor() {
+    this.loadTasksDefinitions();
+  }
 
-  public loadTasksDefinitions() {
+  private loadTasksDefinitions() {
     this.scheduler.define(JOB_NAMES.STATUS_PROBE, async (job) => {
-      // fetch all miners from the table
-      // send a ping to the miner to see if it's online
-      // if online, update the lastUpDatetime of the miner and set "connection: ONLINE"
-      //      if previously OFFLINE
-      //          fetch associated disabled job
-      //          subtract the time it was lastRun from the most recent online status to get the amount of time mining
-      //          subtract the amount of time mining from the contractual amount
-      //          start a job with that remaining time as the setTimeout
-      // if offline, set "connection: OFFLINE"
-      //      find the job associated with the miner and and `disable` it
+      (await this.minerService.findAllMiners()).forEach((miner) => {
+        ping.sys.probe(miner.ipAddress, async (isAlive) => {
+          const previousStatus = miner.status.networkStatus;
+          // Previously online and now offline.
+          if (!isAlive && previousStatus == MinerNetworkStatus.ONLINE) {
+            const newMinerInfo = {
+              ...miner,
+              status: {
+                lastOnlineDate: new Date(),
+                networkStatus: MinerNetworkStatus.OFFLINE,
+              },
+            };
+            this.minerService.updateMiner(miner._id, newMinerInfo);
+            await poolSwitchScheduler.disableJobForMiner(miner);
+          }
+
+          // Previously offline and now back online.
+          if (isAlive && previousStatus == MinerNetworkStatus.OFFLINE) {
+            const newMinerInfo = {
+              ...miner,
+              status: {
+                lastOnlineDate: new Date(),
+                networkStatus: MinerNetworkStatus.ONLINE,
+              },
+            };
+            this.minerService.updateMiner(miner._id, newMinerInfo);
+            poolSwitchScheduler.resumeMinerNetworkInterruptedJob(miner);
+          }
+        });
+      });
     });
   }
 
@@ -36,4 +61,6 @@ class MinerStatusScheduler {
   }
 }
 
-export default MinerStatusScheduler;
+const minerStatusScheduler = new MinerStatusScheduler();
+
+export default minerStatusScheduler;

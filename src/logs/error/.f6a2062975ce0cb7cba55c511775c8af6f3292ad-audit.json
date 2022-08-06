@@ -6,9 +6,9 @@
     "auditLog": "/Users/amadudurham/workspace/farm-mgmt/src/logs/error/.f6a2062975ce0cb7cba55c511775c8af6f3292ad-audit.json",
     "files": [
         {
-            "date": 1659630611100,
-            "name": "/Users/amadudurham/workspace/farm-mgmt/src/logs/error/2022-08-04.log",
-            "hash": "c40fb2cc784382cebee9a1a6b36b7e03653c7d45a09c7b53c9aabf96f3d4e3ac"
+            "date": 1659765610692,
+            "name": "/Users/amadudurham/workspace/farm-mgmt/src/logs/error/2022-08-06.log",
+            "hash": "8feaaa8760fc624eff01254f1ff3fd0584c08db550c88e65d64e4f65d0a31bca"
         }
     ],
     "hashType": "sha256"
