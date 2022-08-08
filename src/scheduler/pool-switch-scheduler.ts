@@ -172,9 +172,9 @@ class PoolSwitchScheduler {
   ) {
     await this.startScheduler();
     minerSwitchPoolContracts.forEach((contract) => {
-      this.scheduler.now(JOB_NAMES.SWITCH_TO_CLIENT_POOL, {
+      this.scheduler.now(JOB_NAMES.SWITCH_TO_COMPANY_POOL, {
         contract: contract,
-        remainingTimePerIteration: contract.clientMillis,
+        remainingTimePerIteration: contract.companyMillis,
         remainingTimeOfTotalContract: contract.totalContractMillis,
       });
     });
