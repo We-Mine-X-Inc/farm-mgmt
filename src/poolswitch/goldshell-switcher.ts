@@ -153,5 +153,8 @@ export async function switchGoldshellPool(
     .then(verifyMinerIsForClient(params))
     .then(getPools)
     .then(deletePool)
-    .then(addPool(params));
+    .then(addPool(params))
+    .catch((e) => {
+      console.log(e);
+    });
 }

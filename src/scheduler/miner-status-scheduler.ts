@@ -4,6 +4,10 @@ import ping from "ping";
 import MinerService from "@/services/miners.service";
 import { MinerNetworkStatus } from "@/interfaces/miners.interface";
 import poolSwitchScheduler from "./pool-switch-scheduler";
+import {
+  AGENDA_MAX_OVERALL_CONCURRENCY,
+  AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
+} from "@config";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
@@ -11,6 +15,8 @@ const JOB_NAMES = {
 
 class MinerStatusScheduler {
   private scheduler = new Agenda({
+    maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
+    defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "minerStatusJobs" },
   });
   private minerService = new MinerService();

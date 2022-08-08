@@ -7,6 +7,10 @@ import PoolService from "@/services/pools.service";
 import { Miner, MinerApiType } from "@/interfaces/miners.interface";
 import { PoolPurposeType } from "@/interfaces/pools.interface";
 import UptimeTickService from "@/services/uptime-tick.service";
+import {
+  AGENDA_MAX_OVERALL_CONCURRENCY,
+  AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
+} from "@config";
 
 const POOL_SWITCH_STATUS = {
   CLIENT_SESSION_COMPLETED: "CLIENT_SESSION_COMPLETED",
@@ -37,6 +41,8 @@ class PoolSwitchScheduler {
   private poolService: PoolService = new PoolService();
   private uptimeTickService: UptimeTickService = new UptimeTickService();
   private scheduler = new Agenda({
+    maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
+    defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "poolSwitchJobs" },
   });
   private schedulerStarted: boolean = false;
@@ -166,7 +172,7 @@ class PoolSwitchScheduler {
   ) {
     await this.startScheduler();
     minerSwitchPoolContracts.forEach((contract) => {
-      this.scheduler.now(JOB_NAMES.SWITCH_TO_CLIENT_POOL, {
+      this.scheduler.now(JOB_NAMES.SWITCH_TO_COMPANY_POOL, {
         contract: contract,
         remainingTimePerIteration: contract.clientMillis,
         remainingTimeOfTotalContract: contract.totalContractMillis,

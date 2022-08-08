@@ -97,8 +97,13 @@ function buildNewMinerConfig(
   poolConfig: PoolConfigInfo
 ): PoolConfigInfo {
   const newPoolConfig = { ...poolConfig };
-  newPoolConfig.pools[0].url = switchPoolInfo.pool.url;
-  newPoolConfig.pools[0].user = switchPoolInfo.pool.username;
+  newPoolConfig.pools = [
+    {
+      url: switchPoolInfo.pool.url,
+      user: switchPoolInfo.pool.username,
+      pass: "",
+    },
+  ];
   return newPoolConfig;
 }
 

@@ -2,6 +2,10 @@ import { Agenda } from "agenda/es";
 import { dbConnection } from "@databases";
 import UptimeTickService from "@/services/uptime-tick.service";
 import { CreateUptimeTickDto } from "@/dtos/uptime-tick.dto";
+import {
+  AGENDA_MAX_OVERALL_CONCURRENCY,
+  AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
+} from "@config";
 
 const JOB_NAMES = {
   UPTIME_PROBE: "Track Process Uptime",
@@ -9,6 +13,8 @@ const JOB_NAMES = {
 
 class ServerUptimeScheduler {
   private scheduler = new Agenda({
+    maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
+    defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "serverUptimeJobs" },
   });
 
