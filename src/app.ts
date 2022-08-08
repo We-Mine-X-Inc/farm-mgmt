@@ -117,8 +117,8 @@ class App {
       },
     ]);
     // await poolSwitchScheduler.resumeServerInterruptedJobs();
-    // await serverUptimeScheduler.startJobs();
-    // await minerStatusScheduler.startJobs();
+    await serverUptimeScheduler.startJobs();
+    await minerStatusScheduler.startJobs();
   }
 
   private initializeMiddlewares() {
