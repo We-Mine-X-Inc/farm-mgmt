@@ -30,10 +30,6 @@ class MinerStatusScheduler {
       (await this.minerService.findAllMiners()).forEach((miner) => {
         ping.sys.probe(miner.ipAddress, async (isAlive) => {
           const previousStatus = miner.status.networkStatus;
-          console.log("miner");
-          console.log(miner.status);
-          console.log("isAlive");
-          console.log(isAlive);
 
           // Previously online and now offline.
           if (!isAlive && previousStatus == MinerNetworkStatus.ONLINE) {
@@ -44,8 +40,6 @@ class MinerStatusScheduler {
                 networkStatus: MinerNetworkStatus.OFFLINE,
               },
             };
-            console.log("newMinerInfo");
-            console.log(newMinerInfo);
             this.minerService.updateMiner(miner._id, newMinerInfo);
             await poolSwitchScheduler.disableJobForMiner(miner);
           }
