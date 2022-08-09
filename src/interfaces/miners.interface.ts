@@ -31,7 +31,7 @@ export enum CoinType {
 }
 
 export interface Miner {
-  _id: string;
+  _id: Types.ObjectId;
   userId: Types.ObjectId;
   ipAddress: string;
   mac: string;

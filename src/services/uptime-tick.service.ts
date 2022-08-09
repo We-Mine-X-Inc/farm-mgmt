@@ -7,7 +7,7 @@ class UptimeTickService {
   public uptimeTicks = uptimeTickModel;
 
   public async findAllTicks(): Promise<UptimeTick[]> {
-    return await this.uptimeTicks.find();
+    return await this.uptimeTicks.find().lean();
   }
 
   public async findMostRecentTick(): Promise<UptimeTick> {

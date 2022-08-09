@@ -3,16 +3,17 @@ import { HttpException } from "@exceptions/HttpException";
 import { Miner } from "@interfaces/miners.interface";
 import minerModel from "@models/miners.model";
 import { isEmpty } from "@utils/util";
+import { Types } from "mongoose";
 
 class MinerService {
   public miners = minerModel;
 
   public async findAllMiners(): Promise<Miner[]> {
-    const miners: Miner[] = await this.miners.find();
+    const miners: Miner[] = await this.miners.find().lean();
     return miners;
   }
 
-  public async findMinerById(minerId: string): Promise<Miner> {
+  public async findMinerById(minerId: Types.ObjectId): Promise<Miner> {
     if (isEmpty(minerId)) throw new HttpException(400, "You're not minerId");
 
     const findMiner: Miner = await this.miners.findOne({ _id: minerId });
@@ -38,7 +39,7 @@ class MinerService {
   }
 
   public async updateMiner(
-    minerId: string,
+    minerId: Types.ObjectId,
     minerData: CreateMinerDto
   ): Promise<Miner> {
     if (isEmpty(minerData))
@@ -48,7 +49,7 @@ class MinerService {
       const findMiner: Miner = await this.miners.findOne({
         mac: minerData.mac,
       });
-      if (findMiner && findMiner._id != minerId)
+      if (findMiner && !findMiner._id.equals(minerId))
         throw new HttpException(
           409,
           `You're MAC Address ${minerData.mac} already exists`
@@ -64,7 +65,7 @@ class MinerService {
     return updateMinerById;
   }
 
-  public async deleteMiner(minerId: string): Promise<Miner> {
+  public async deleteMiner(minerId: Types.ObjectId): Promise<Miner> {
     const deleteMinerById: Miner = await this.miners.findByIdAndDelete(minerId);
     if (!deleteMinerById) throw new HttpException(409, "You're not user");
 

@@ -8,7 +8,7 @@ export enum PoolPurposeType {
 }
 
 export interface Pool {
-  _id: string;
+  _id: Types.ObjectId;
   minerId: Types.ObjectId;
   url: string;
   username: string;

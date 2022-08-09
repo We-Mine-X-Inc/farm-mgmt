@@ -3,6 +3,7 @@ import { HttpException } from "@exceptions/HttpException";
 import { Pool, PoolPurposeType } from "@interfaces/pools.interface";
 import poolModel from "@models/pools.model";
 import { isEmpty } from "@utils/util";
+import { Types } from "mongoose";
 
 type RobustFindParams = {
   minerId: string;
@@ -13,11 +14,11 @@ class PoolService {
   public pools = poolModel;
 
   public async findAllPools(): Promise<Pool[]> {
-    const pools: Pool[] = await this.pools.find();
+    const pools: Pool[] = await this.pools.find().lean();
     return pools;
   }
 
-  public async findPoolById(poolId: string): Promise<Pool> {
+  public async findPoolById(poolId: Types.ObjectId): Promise<Pool> {
     if (isEmpty(poolId)) throw new HttpException(400, "You're not poolId");
 
     const findPool: Pool = await this.pools.findOne({ _id: poolId });
@@ -54,7 +55,7 @@ class PoolService {
   }
 
   public async updatePool(
-    poolId: string,
+    poolId: Types.ObjectId,
     poolData: CreatePoolDto
   ): Promise<Pool> {
     if (isEmpty(poolData)) throw new HttpException(400, "You're not poolData");
@@ -64,7 +65,7 @@ class PoolService {
         minerId: poolData.minerId,
         purpose: poolData.purpose,
       });
-      if (findPool && findPool._id != poolId)
+      if (findPool && !findPool._id.equals(poolId))
         throw new HttpException(
           409,
           `You specified the wrong miner ${poolData.minerId} and purpose ${poolData.purpose} for pool updates.`
@@ -79,7 +80,7 @@ class PoolService {
     return updatePoolById;
   }
 
-  public async deletePool(poolId: string): Promise<Pool> {
+  public async deletePool(poolId: Types.ObjectId): Promise<Pool> {
     const deletePoolById: Pool = await this.pools.findByIdAndDelete(poolId);
     if (!deletePoolById) throw new HttpException(409, "You're not pool");
 
