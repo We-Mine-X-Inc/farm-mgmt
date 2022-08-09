@@ -54,6 +54,7 @@ class App {
   }
 
   private async initiliazeSchedulers() {
+    await poolSwitchScheduler.resumeServerInterruptedJobs();
     // await poolSwitchScheduler.startNewJobs([
     //   {
     //     minerId: "62ecae90c21e972c729114ce",
@@ -116,7 +117,6 @@ class App {
         totalContractMillis: 21024000000,
       },
     ]);
-    await poolSwitchScheduler.resumeServerInterruptedJobs();
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }

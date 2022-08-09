@@ -11,6 +11,11 @@ import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
+import {
+  sendFailureSwitchEmail,
+  sendSuccessfulSwitchEmail,
+} from "@/alerts/notifications";
+import { SwitchPoolParams } from "@/poolswitch/common-types";
 
 const POOL_SWITCH_STATUS = {
   CLIENT_SESSION_COMPLETED: "CLIENT_SESSION_COMPLETED",
@@ -23,6 +28,8 @@ const JOB_NAMES = {
   SWITCH_TO_CLIENT_POOL: "Switch to Client Pool",
   SWITCH_TO_COMPANY_POOL: "Switch to Company Pool",
 };
+
+type PoolSwitchFunction = (params: SwitchPoolParams) => Promise<any>;
 
 const POOL_SWITCH_FUNCTION = {
   [MinerApiType.ANTMINER]: switchAntminerPool,
@@ -54,6 +61,7 @@ class PoolSwitchScheduler {
   private async startScheduler() {
     if (!this.schedulerStarted) {
       await this.scheduler.start();
+      this.schedulerStarted = true;
     }
   }
   /**
@@ -87,22 +95,24 @@ class PoolSwitchScheduler {
         ipAddress: miner.ipAddress,
         pool: { url: clientPool.url, username: clientPool.username },
       };
-      await poolSwitchFunction(poolSwitchParams);
+      await switchPool({
+        poolSwitchFunction,
+        poolSwitchParams,
+      });
 
       // Switch back to company pool once time is up.
-      const scopedScheduler = this.scheduler;
-      return new Promise(function (resolve) {
-        setTimeout(() => {
-          const updatedJobData = {
-            remainingTimeOfTotalContract:
-              remainingTimeOfTotalContract - remainingTimePerIteration,
-            remainingTimePerIteration: contract.companyMillis,
-            contract: contract,
-          };
-          scopedScheduler.now(JOB_NAMES.SWITCH_TO_COMPANY_POOL, updatedJobData);
-          resolve(POOL_SWITCH_STATUS.CLIENT_SESSION_COMPLETED);
-        }, remainingTimePerIteration);
-      });
+      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
+      const updatedJobData = {
+        remainingTimeOfTotalContract:
+          remainingTimeOfTotalContract - remainingTimePerIteration,
+        remainingTimePerIteration: contract.companyMillis,
+        contract: contract,
+      };
+      this.scheduler.schedule(
+        switchStartTime,
+        JOB_NAMES.SWITCH_TO_COMPANY_POOL,
+        updatedJobData
+      );
     });
   }
 
@@ -124,7 +134,7 @@ class PoolSwitchScheduler {
         purpose: PoolPurposeType.PURE_COMPANY_REVENUE,
       });
 
-      // Switch to client pool, or company revenue pool if contract completed.
+      // Switch to fee pool, or company revenue pool if contract completed.
       const poolSwitchFunction = POOL_SWITCH_FUNCTION[miner.API];
       const pool =
         remainingTimeOfTotalContract <= 0
@@ -138,27 +148,26 @@ class PoolSwitchScheduler {
         ipAddress: miner.ipAddress,
         pool: pool,
       };
-      await poolSwitchFunction(poolSwitchParams);
-
-      const scopedScheduler = this.scheduler;
-      return new Promise(function (resolve) {
-        if (remainingTimeOfTotalContract <= 0) {
-          resolve(POOL_SWITCH_STATUS.CONTRACT_COMPLETED);
-        } else {
-          setTimeout(() => {
-            const updatedJobData = {
-              remainingTimeOfTotalContract: remainingTimeOfTotalContract,
-              remainingTimePerIteration: contract.clientMillis,
-              contract: contract,
-            };
-            scopedScheduler.now(
-              JOB_NAMES.SWITCH_TO_CLIENT_POOL,
-              updatedJobData
-            );
-            resolve(POOL_SWITCH_STATUS.COMPANY_SESSION_COMPLETED);
-          }, remainingTimePerIteration);
-        }
+      await switchPool({
+        poolSwitchFunction,
+        poolSwitchParams,
       });
+
+      if (remainingTimeOfTotalContract <= 0) {
+        return;
+      }
+
+      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
+      const updatedJobData = {
+        remainingTimeOfTotalContract: remainingTimeOfTotalContract,
+        remainingTimePerIteration: contract.clientMillis,
+        contract: contract,
+      };
+      this.scheduler.schedule(
+        switchStartTime,
+        JOB_NAMES.SWITCH_TO_CLIENT_POOL,
+        updatedJobData
+      );
     });
   }
 
@@ -193,16 +202,18 @@ class PoolSwitchScheduler {
         { name: JOB_NAMES.SWITCH_TO_CLIENT_POOL },
         { name: JOB_NAMES.SWITCH_TO_COMPANY_POOL },
       ],
-      lastFinishedAt: { $exists: false },
+      nextRunAt: { $exists: true },
       disabled: { $exists: false },
     });
     jobs.forEach((job: any) => {
       const updatedJobData = { ...job.attrs.data };
-      updatedJobData.remainingTimePerIteration = calculateRemainingTime({
+      const remainingTime = calculateRemainingTime({
         job,
         lastTrackedUptime,
       });
-      this.scheduler.now(job.attrs.name, updatedJobData);
+      const switchStartTime = new Date(Date.now() + remainingTime);
+      updatedJobData.remainingTimePerIteration = remainingTime;
+      this.scheduler.schedule(switchStartTime, job.attrs.name, updatedJobData);
       job.remove();
     });
   }
@@ -240,11 +251,30 @@ class PoolSwitchScheduler {
   }
 }
 
-function calculateRemainingTime(params: { job; lastTrackedUptime }): Number {
-  const jobStartTime = params.job.attrs.lastRunAt.getTime();
-  const timeSpentMining =
-    params.lastTrackedUptime.datetime.getTime() - jobStartTime;
-  return params.job.attrs.data.remainingTimePerIteration - timeSpentMining;
+async function switchPool(params: {
+  poolSwitchFunction: PoolSwitchFunction;
+  poolSwitchParams: SwitchPoolParams;
+}) {
+  return params
+    .poolSwitchFunction(params.poolSwitchParams)
+    .then(() => {
+      sendSuccessfulSwitchEmail({
+        toClient: false,
+        switchParams: params.poolSwitchParams,
+      });
+    })
+    .catch((error) => {
+      sendFailureSwitchEmail({
+        toClient: false,
+        switchParams: params.poolSwitchParams,
+        error: error,
+      });
+    });
+}
+
+function calculateRemainingTime(params: { job; lastTrackedUptime }): number {
+  const jobExpectedStartTime = params.job.attrs.nextRunAt.getTime();
+  return jobExpectedStartTime - params.lastTrackedUptime.datetime.getTime();
 }
 
 const poolSwitchScheduler = new PoolSwitchScheduler();

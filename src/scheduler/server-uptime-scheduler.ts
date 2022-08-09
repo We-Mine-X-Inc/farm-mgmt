@@ -35,7 +35,13 @@ class ServerUptimeScheduler {
   public async startJobs() {
     await this.scheduler.start();
 
+    await this.removePreviousJobs();
+
     this.scheduler.every("5 minutes", JOB_NAMES.UPTIME_PROBE);
+  }
+
+  private async removePreviousJobs() {
+    (await this.scheduler.jobs()).forEach((job) => job.remove());
   }
 }
 
