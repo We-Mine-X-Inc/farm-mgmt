@@ -106,6 +106,11 @@ async function deletePool(
   poolSwitchInfo: ApplyPoolSwitchInfo
 ): Promise<SessionInfo> {
   const sessionInfo = poolSwitchInfo.sessionInfo;
+  if (poolSwitchInfo.pools.length <= 0) {
+    return new Promise((resolve) => {
+      resolve(sessionInfo);
+    });
+  }
   return await axios({
     method: "put",
     url: `http://${sessionInfo.ipAddress}/mcb/delpool`,
