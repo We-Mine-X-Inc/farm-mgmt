@@ -54,69 +54,7 @@ class App {
   }
 
   private async initiliazeSchedulers() {
-    // await poolSwitchScheduler.resumeServerInterruptedJobs();
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ecae90c21e972c729114ce"),
-        clientMillis: 46800000,
-        companyMillis: 39600000,
-        totalContractMillis: 17082000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfe9"),
-        clientMillis: 46800000,
-        companyMillis: 39600000,
-        totalContractMillis: 17082000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfea"),
-        clientMillis: 46800000,
-        companyMillis: 39600000,
-        totalContractMillis: 17082000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfeb"),
-        clientMillis: 46800000,
-        companyMillis: 39600000,
-        totalContractMillis: 17082000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfec"),
-        clientMillis: 54000000,
-        companyMillis: 32400000,
-        totalContractMillis: 19710000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfed"),
-        clientMillis: 54000000,
-        companyMillis: 32400000,
-        totalContractMillis: 19710000000,
-      },
-    ]);
-
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfee"),
-        clientMillis: 57600000,
-        companyMillis: 28800000,
-        totalContractMillis: 21024000000,
-      },
-    ]);
+    await poolSwitchScheduler.resumeServerInterruptedJobs();
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }
