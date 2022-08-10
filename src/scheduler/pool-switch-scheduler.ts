@@ -207,6 +207,8 @@ class PoolSwitchScheduler {
       nextRunAt: { $exists: true },
       disabled: { $exists: false },
     });
+    console.log("jobs");
+    console.log(jobs);
     jobs.forEach(async (job: Job) => {
       const updatedJobData = { ...job.attrs.data };
       const remainingTime = calculateRemainingTime({
@@ -215,6 +217,8 @@ class PoolSwitchScheduler {
       });
       const switchStartTime = new Date(Date.now() + remainingTime);
       updatedJobData.remainingTimePerIteration = remainingTime;
+      console.log("switchStartTime");
+      console.log(switchStartTime);
       await this.scheduler.schedule(
         switchStartTime,
         job.attrs.name,

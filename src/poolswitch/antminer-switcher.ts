@@ -10,9 +10,10 @@ const ANTMINER_DIGESTAUTH = new AxiosDigestAuth({
   password: ANTMINER_DEFAULTS.MINER_PWD,
 });
 
-const COMPANY_POOL = {
-  url: "stratum+tcp://us-east.stratum.slushpool.com:3333",
-  user: "weminex.btcfee",
+const EMPTY_POOL_CONFIG = {
+  url: "",
+  user: "",
+  pass: "",
 };
 
 type AntminerMinerPoolInfo = {
@@ -103,6 +104,8 @@ function buildNewMinerConfig(
       user: switchPoolInfo.pool.username,
       pass: "",
     },
+    EMPTY_POOL_CONFIG,
+    EMPTY_POOL_CONFIG,
   ];
   return newPoolConfig;
 }
