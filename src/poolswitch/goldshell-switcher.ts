@@ -66,6 +66,7 @@ async function getSettings(
     headers: {
       Authorization: `Bearer ${sessionInfo.authToken}`,
       "Content-Type": "application/json",
+      Connection: "keep-alive",
     },
   }).then((res) => {
     return {
@@ -94,6 +95,7 @@ async function getPools(
     headers: {
       Authorization: `Bearer ${sessionInfo.authToken}`,
       "Content-Type": "application/json",
+      Connection: "keep-alive",
     },
   }).then((res) => {
     return {
@@ -103,7 +105,7 @@ async function getPools(
   });
 }
 
-async function deletePool(
+async function deletePools(
   poolSwitchInfo: ApplyPoolSwitchInfo
 ): Promise<SessionInfo> {
   const sessionInfo = poolSwitchInfo.sessionInfo;
@@ -112,15 +114,21 @@ async function deletePool(
       resolve(sessionInfo);
     });
   }
-  return await axios({
-    method: "put",
-    url: `http://${sessionInfo.ipAddress}/mcb/delpool`,
-    headers: {
-      Authorization: `Bearer ${sessionInfo.authToken}`,
-      "Content-Type": "application/json",
-    },
-    data: poolSwitchInfo.pools[0],
-  }).then((res) => {
+  return Promise.all(
+    poolSwitchInfo.pools.map((pool) => {
+      return axios({
+        method: "put",
+        url: `http://${sessionInfo.ipAddress}/mcb/delpool`,
+        headers: {
+          Authorization: `Bearer ${sessionInfo.authToken}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Connection: "keep-alive",
+        },
+        data: pool,
+      });
+    })
+  ).then((res) => {
     return sessionInfo;
   });
 }
@@ -133,6 +141,8 @@ function addPool(switchPoolInfo: SwitchPoolParams) {
       headers: {
         Authorization: `Bearer ${sessionInfo.authToken}`,
         "Content-Type": "application/json",
+        Accept: "application/json",
+        Connection: "keep-alive",
       },
       data: buildNewPool(switchPoolInfo),
     }).then((res) => {
@@ -143,11 +153,15 @@ function addPool(switchPoolInfo: SwitchPoolParams) {
 
 function buildNewPool(
   switchPoolInfo: SwitchPoolParams
-): GoldshellNewMinerPoolInfo {
+): GoldshellMinerPoolInfo {
   return {
+    legal: true,
     url: switchPoolInfo.pool.url,
     user: switchPoolInfo.pool.username,
     pass: GOLDSHELL_DEFAULTS.POOL_PWD,
+    dragid: 0,
+    active: false,
+    "pool-priority": 0,
   };
 }
 
@@ -158,6 +172,6 @@ export async function switchGoldshellPool(
     .then(getSettings)
     .then(verifyMinerIsForClient(params))
     .then(getPools)
-    .then(deletePool)
+    .then(deletePools)
     .then(addPool(params));
 }

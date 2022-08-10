@@ -28,7 +28,7 @@ class PoolService {
   }
 
   public async findPool(params: RobustFindParams): Promise<Pool> {
-    if (isEmpty(params)) throw new HttpException(400, "You're not minerId");
+    if (isEmpty(params)) throw new HttpException(400, "You're not pool info");
 
     const findPool: Pool = await this.pools.findOne(params);
     if (!findPool) throw new HttpException(409, "You're not pool");

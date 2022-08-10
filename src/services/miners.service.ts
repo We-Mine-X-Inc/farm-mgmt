@@ -14,10 +14,11 @@ class MinerService {
   }
 
   public async findMinerById(minerId: Types.ObjectId): Promise<Miner> {
-    if (isEmpty(minerId)) throw new HttpException(400, "You're not minerId");
+    if (isEmpty(minerId._id.id))
+      throw new HttpException(400, "You're not minerId");
 
     const findMiner: Miner = await this.miners.findOne({ _id: minerId });
-    if (!findMiner) throw new HttpException(409, "You're not user");
+    if (!findMiner) throw new HttpException(409, "You're not miner");
 
     return findMiner;
   }
