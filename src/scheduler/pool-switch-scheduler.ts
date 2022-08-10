@@ -13,9 +13,12 @@ import {
 } from "@config";
 import {
   sendFailureSwitchEmail,
+  sendFailureToRemoveInterruptedJob,
+  sendResumeSwitchEmail,
   sendSuccessfulSwitchEmail,
 } from "@/alerts/notifications";
 import { SwitchPoolParams } from "@/poolswitch/common-types";
+import { Types } from "mongoose";
 
 const POOL_SWITCH_STATUS = {
   CLIENT_SESSION_COMPLETED: "CLIENT_SESSION_COMPLETED",
@@ -40,7 +43,7 @@ export type MinerSwitchPoolContract = {
   clientMillis: number;
   companyMillis: number;
   totalContractMillis: number;
-  minerId: string;
+  minerId: Types.ObjectId;
 };
 
 class PoolSwitchScheduler {
@@ -64,6 +67,7 @@ class PoolSwitchScheduler {
       this.schedulerStarted = true;
     }
   }
+
   /**
    * Loads all of the task definitions needed for pool switching operations.
    * These tasks must be loaded so that calls to `startNewJobs` or
@@ -98,6 +102,7 @@ class PoolSwitchScheduler {
       await switchPool({
         poolSwitchFunction,
         poolSwitchParams,
+        toClient: true,
       });
 
       // Switch back to company pool once time is up.
@@ -151,6 +156,7 @@ class PoolSwitchScheduler {
       await switchPool({
         poolSwitchFunction,
         poolSwitchParams,
+        toClient: false,
       });
 
       if (remainingTimeOfTotalContract <= 0) {
@@ -205,7 +211,7 @@ class PoolSwitchScheduler {
       nextRunAt: { $exists: true },
       disabled: { $exists: false },
     });
-    jobs.forEach((job: any) => {
+    jobs.forEach(async (job: any) => {
       const updatedJobData = { ...job.attrs.data };
       const remainingTime = calculateRemainingTime({
         job,
@@ -214,10 +220,16 @@ class PoolSwitchScheduler {
       const switchStartTime = new Date(Date.now() + remainingTime);
       updatedJobData.remainingTimePerIteration = remainingTime;
       this.scheduler.schedule(switchStartTime, job.attrs.name, updatedJobData);
-      job.remove();
+      await job.remove().catch((e: Error) => {
+        sendFailureToRemoveInterruptedJob(e.toString());
+      });
     });
   }
 
+  /**
+   * Disable jobs associated with the given miner.
+   * @param miner The miner to find a job for and disable.
+   */
   public async disableJobForMiner(miner: Miner) {
     await this.scheduler.disable({
       $or: [
@@ -239,14 +251,18 @@ class PoolSwitchScheduler {
       disabled: true,
     });
 
-    jobs.forEach((job) => {
-      const updatedJobData = { ...job.attrs.data };
+    jobs.forEach(async (job) => {
+      const jobInfo = job.attrs;
+      const updatedJobData = { ...jobInfo.data };
       updatedJobData.remainingTimePerIteration = calculateRemainingTime({
         job: job,
         lastTrackedUptime: miner.status.lastOnlineDate,
       });
-      this.scheduler.now(job.attrs.name, updatedJobData);
-      job.remove();
+      this.scheduler.now(jobInfo.name, updatedJobData);
+      sendResumeSwitchEmail({ jobInfo: job.attrs, updatedJobData });
+      await job.remove().catch((e: Error) => {
+        sendFailureToRemoveInterruptedJob(e.toString());
+      });
     });
   }
 }
@@ -254,20 +270,19 @@ class PoolSwitchScheduler {
 async function switchPool(params: {
   poolSwitchFunction: PoolSwitchFunction;
   poolSwitchParams: SwitchPoolParams;
+  toClient: boolean;
 }) {
   return params
     .poolSwitchFunction(params.poolSwitchParams)
     .then(() => {
       sendSuccessfulSwitchEmail({
-        toClient: false,
         switchParams: params.poolSwitchParams,
       });
     })
-    .catch((error) => {
+    .catch((error: Error) => {
       sendFailureSwitchEmail({
-        toClient: false,
         switchParams: params.poolSwitchParams,
-        error: error,
+        error: error.toString(),
       });
     });
 }

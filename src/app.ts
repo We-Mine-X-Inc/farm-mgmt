@@ -91,18 +91,18 @@ class App {
     //   },
     // ]);
 
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: "62ed25b00f9cf6bb58b7dfec",
-        clientMillis: 54000000,
-        companyMillis: 32400000,
-        totalContractMillis: 19710000000,
-      },
-    ]);
+    // await poolSwitchScheduler.startNewJobs([
+    //   {
+    //     minerId: "62ed25b00f9cf6bb58b7dfec",
+    //     clientMillis: 54000000,
+    //     companyMillis: 32400000,
+    //     totalContractMillis: 19710000000,
+    //   },
+    // ]);
 
     await poolSwitchScheduler.startNewJobs([
       {
-        minerId: "62ed25b00f9cf6bb58b7dfed",
+        minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfed"),
         clientMillis: 54000000,
         companyMillis: 32400000,
         totalContractMillis: 19710000000,

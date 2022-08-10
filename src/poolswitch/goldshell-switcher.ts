@@ -1,4 +1,5 @@
 const axios = require("axios").default;
+import { sendFailureSwitchEmail } from "@/alerts/notifications";
 import { SwitchPoolParams } from "./common-types";
 
 const GOLDSHELL_DEFAULTS = {

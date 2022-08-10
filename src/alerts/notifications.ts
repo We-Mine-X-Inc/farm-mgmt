@@ -3,30 +3,48 @@ import { SwitchPoolParams } from "@/poolswitch/common-types";
 import getTransporter from "./mailer";
 
 export function sendSuccessfulSwitchEmail(params: {
-  toClient: boolean;
   switchParams: SwitchPoolParams;
 }) {
-  //   const poolType = params.toClient ? "Client" : "Company";
-  //   getTransporter().sendMail({
-  //     to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
-  //     subject: `Successfully Switched to ${poolType} Pool`,
-  //     text: `The server was able to successfully switch for params: ${JSON.stringify(
-  //       params.switchParams
-  //     )}.`,
-  //   });
+  getTransporter().sendMail({
+    to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
+    subject: `Successfully Switched to Pool`,
+    text: `The server was able to successfully switch for params: ${JSON.stringify(
+      params.switchParams
+    )}.`,
+  });
 }
 
 export function sendFailureSwitchEmail(params: {
-  toClient: boolean;
   switchParams: SwitchPoolParams;
-  error: any;
+  error: string;
 }) {
-  //   const poolType = params.toClient ? "Client" : "Company";
-  //   getTransporter().sendMail({
-  //     to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
-  //     subject: `Failed to Switch to ${poolType} Pool`,
-  //     text: `The server was unable to switch the pool for params: ${JSON.stringify(
-  //       params.switchParams
-  //     )}.\n ${params.error}`,
-  //   });
+  getTransporter().sendMail({
+    to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
+    subject: `Failed to Switch to Pool`,
+    text: `The server was unable to switch the pool for params: ${JSON.stringify(
+      params.switchParams
+    )}.\n ${params.error}`,
+  });
+}
+
+export function sendResumeSwitchEmail(params: {
+  jobInfo: any;
+  updatedJobData: any;
+}) {
+  getTransporter().sendMail({
+    to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
+    subject: `Successfully Resumed Mining`,
+    text: `The server has resumed mining of the following job: ${JSON.stringify(
+      params.jobInfo
+    )} with the following new info: ${JSON.stringify(params.updatedJobData)}.`,
+  });
+}
+
+export function sendFailureToRemoveInterruptedJob(e: string) {
+  getTransporter().sendMail({
+    to: NOTIFICATION_EMAIL_RECIPIENTS + EMAIL_DOMAIN,
+    subject: `Failed to Remove Obsolete Interrupted Job`,
+    text: `The server was unable to garbage collect the obsolete interrupted
+    job due to the following error: ${e}.`,
+  });
 }
