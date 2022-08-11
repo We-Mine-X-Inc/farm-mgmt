@@ -140,7 +140,8 @@ class App {
         info: {
           title: "REST API",
           version: "1.0.0",
-          description: "Internal API - Manages Users and Pool Switching",
+          description:
+            "Internal API - Manages Users, Miners, Pools and Pool Switching",
         },
       },
       apis: ["swagger.yaml"],

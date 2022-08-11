@@ -206,6 +206,7 @@ class PoolSwitchScheduler {
       ],
       nextRunAt: { $exists: true },
       disabled: { $exists: false },
+      lastFinishedAt: { $exists: false },
     });
     jobs.forEach(async (job: Job) => {
       const remainingTime = calculateRemainingTime({
