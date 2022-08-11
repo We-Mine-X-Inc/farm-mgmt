@@ -103,7 +103,7 @@ class PoolSwitchScheduler {
       const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
       const updatedJobData = {
         remainingTimeOfTotalContract:
-          remainingTimeOfTotalContract - remainingTimePerIteration,
+          remainingTimeOfTotalContract - contract.clientMillis,
         remainingTimePerIteration: contract.companyMillis,
         contract: contract,
       };
