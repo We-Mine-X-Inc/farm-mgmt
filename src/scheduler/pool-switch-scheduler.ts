@@ -64,6 +64,7 @@ class PoolSwitchScheduler {
   }
 
   public async oneTimeRestart() {
+    await this.startScheduler();
     const switchStartTime = 18000000;
 
     await this.scheduler.schedule(
