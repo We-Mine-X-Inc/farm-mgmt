@@ -1,66 +1,78 @@
-import { EMAIL_DOMAIN, NOTIFICATION_EMAIL_RECIPIENTS } from "@/config";
+const axios = require("axios").default;
+import {
+  SLACK_POOL_SWITCHING_INFO_URL,
+  SLACK_POOL_SWITCHING_ERROR_URL,
+} from "@/config";
 import { SwitchPoolParams } from "@/poolswitch/common-types";
-import getTransporter from "./mailer";
 
 export function sendSuccessfulSwitchEmail(params: {
   switchParams: SwitchPoolParams;
 }) {
-  getTransporter().sendMail({
-    to: createEmail({
-      user: NOTIFICATION_EMAIL_RECIPIENTS,
-      domain: EMAIL_DOMAIN,
-    }),
-    subject: `Successfully Switched to Pool`,
-    text: `The server was able to successfully switch for params: ${JSON.stringify(
+  const text = `
+    Successfully Switched to Pool
+    
+    The server was able to successfully switch for params: ${JSON.stringify(
       params.switchParams
-    )}.`,
-  });
+    )}.`;
+
+  sendInfo(text);
 }
 
 export function sendFailureSwitchEmail(params: {
   switchParams: SwitchPoolParams;
   error: string;
 }) {
-  getTransporter().sendMail({
-    to: createEmail({
-      user: NOTIFICATION_EMAIL_RECIPIENTS,
-      domain: EMAIL_DOMAIN,
-    }),
-    subject: `Failed to Switch to Pool`,
-    text: `The server was unable to switch the pool for params: ${JSON.stringify(
+  const text = `
+    Failed to Switch to Pool
+
+    The server was unable to switch the pool for params: ${JSON.stringify(
       params.switchParams
-    )}.\n ${params.error}`,
-  });
+    )}.
+      
+    ${params.error}`;
+
+  sendError(text);
 }
 
-export function sendResumeSwitchEmail(params: {
-  jobInfo: any;
-  updatedJobData: any;
-}) {
-  getTransporter().sendMail({
-    to: createEmail({
-      user: NOTIFICATION_EMAIL_RECIPIENTS,
-      domain: EMAIL_DOMAIN,
-    }),
-    subject: `Successfully Resumed Mining`,
-    text: `The server has resumed mining of the following job: ${JSON.stringify(
+export function sendResumeSwitchEmail(params: { jobInfo: any; jobData: any }) {
+  const text = `
+    Successfully Resumed Mining
+    
+    The server has resumed mining of the following job: ${JSON.stringify(
       params.jobInfo
-    )} with the following new info: ${JSON.stringify(params.updatedJobData)}.`,
-  });
+    )} with the following new info: ${JSON.stringify(params.jobData)}.`;
+
+  sendInfo(text);
 }
 
 export function sendFailureToRemoveInterruptedJob(e: string) {
-  getTransporter().sendMail({
-    to: createEmail({
-      user: NOTIFICATION_EMAIL_RECIPIENTS,
-      domain: EMAIL_DOMAIN,
-    }),
-    subject: `Failed to Remove Obsolete Interrupted Job`,
-    text: `The server was unable to garbage collect the obsolete interrupted
-    job due to the following error: ${e}.`,
-  });
+  const text = `
+    Failed to Remove Obsolete Interrupted Job
+
+    The server was unable to garbage collect the obsolete interrupted
+    job due to the following error:
+    
+    ${e}.`;
+
+  sendError(text);
 }
 
-function createEmail(params: { user: string; domain: string }) {
-  return `${params.user}@${params.domain}`;
+function sendInfo(text) {
+  sendNotification({ url: SLACK_POOL_SWITCHING_INFO_URL, text });
+}
+
+function sendError(text) {
+  sendNotification({ url: SLACK_POOL_SWITCHING_ERROR_URL, text });
+}
+
+function sendNotification(params: { url: string; text: string }) {
+  axios({
+    method: "post",
+    url: params.url,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    data: { text: params.text },
+  });
 }

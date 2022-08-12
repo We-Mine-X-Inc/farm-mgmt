@@ -80,15 +80,13 @@ function getMinerConfig(
 
 function updateMinerConfig(
   switchPoolParams: SwitchPoolParams
-): (poolConfig: PoolConfigInfo) => Promise<void> {
+): (poolConfig: PoolConfigInfo) => Promise<any> {
   return async (poolConfig: PoolConfigInfo) => {
     return await ANTMINER_DIGESTAUTH.request({
       headers: { Accept: "application/json" },
       method: "POST",
       url: `http://${switchPoolParams.ipAddress}/cgi-bin/set_miner_conf.cgi`,
       data: buildNewMinerConfig(switchPoolParams, poolConfig),
-    }).then((res) => {
-      // send successful confirmation email of the miner switched
     });
   };
 }

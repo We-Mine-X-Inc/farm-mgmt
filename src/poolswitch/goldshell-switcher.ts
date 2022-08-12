@@ -1,5 +1,4 @@
 const axios = require("axios").default;
-import { sendFailureSwitchEmail } from "@/alerts/notifications";
 import { SwitchPoolParams } from "./common-types";
 
 const GOLDSHELL_DEFAULTS = {
@@ -8,21 +7,9 @@ const GOLDSHELL_DEFAULTS = {
   MINER_PWD: "123456789",
 };
 
-// Add to Database.
-const COMPANY_POOL = {
-  url: "stratum+tcp://kda.ss.poolmars.net:5200",
-  user: "k:fd93de931359a2f15ba2aacdd9525e3783af0e975fe39195ba9f4cf6abeb8ff3+pps.kdfee",
-};
-
 type SessionInfo = {
   ipAddress: string;
   authToken: string;
-};
-
-type GoldshellNewMinerPoolInfo = {
-  url: string;
-  user: string;
-  pass: string;
 };
 
 type GoldshellMinerPoolInfo = {
@@ -48,7 +35,6 @@ type ApplyPoolSwitchInfo = {
 };
 
 async function loginToMiner(ipAddress: string): Promise<SessionInfo> {
-  // Add error handling to email employees of issues.
   return await axios({
     method: "get",
     url: `http://${ipAddress}/user/login?username=${GOLDSHELL_DEFAULTS.MINER_USERNAME}&password=${GOLDSHELL_DEFAULTS.MINER_PWD}`,
@@ -79,7 +65,6 @@ async function getSettings(
 function verifyMinerIsForClient(params: SwitchPoolParams): MinerValidator {
   return (validationInfo: PoolValidationInfo) => {
     if (validationInfo.macAddress != params.macAddress) {
-      // send an email about miner ip address switching
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
     }
     return validationInfo.sessionInfo;
@@ -128,7 +113,7 @@ async function deletePools(
         data: pool,
       });
     })
-  ).then((res) => {
+  ).then(() => {
     return sessionInfo;
   });
 }
@@ -145,8 +130,6 @@ function addPool(switchPoolInfo: SwitchPoolParams) {
         Connection: "keep-alive",
       },
       data: buildNewPool(switchPoolInfo),
-    }).then((res) => {
-      // send successful confirmation email of the miner switched
     });
   };
 }

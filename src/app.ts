@@ -1,7 +1,7 @@
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
-import { connect, isValidObjectId, set, Types } from "mongoose";
+import { connect, set, Types } from "mongoose";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { NODE_ENV, PORT, LOG_FORMAT } from "@config";
@@ -11,8 +11,8 @@ import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import poolSwitchScheduler from "./scheduler/pool-switch-scheduler";
 import serverUptimeScheduler from "./scheduler/server-uptime-scheduler";
-import ping from "ping";
 import minerStatusScheduler from "./scheduler/miner-status-scheduler";
+import { testEmail } from "./alerts/notifications";
 
 class App {
   public app: express.Application;
@@ -25,7 +25,8 @@ class App {
     this.port = PORT || 3000;
 
     this.connectToDatabase();
-    this.initiliazeSchedulers();
+    testEmail();
+    // this.initiliazeSchedulers();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeSwagger();
