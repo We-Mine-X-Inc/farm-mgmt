@@ -63,41 +63,6 @@ class PoolSwitchScheduler {
     this.loadTasksDefinitions();
   }
 
-  public async oneTimeRestart() {
-    await this.startScheduler();
-    const switchStartTime = new Date(Date.now() + 14400000);
-
-    await this.scheduler.schedule(
-      switchStartTime,
-      JOB_NAMES.SWITCH_TO_CLIENT_POOL,
-      {
-        remainingTimeOfTotalContract: 16988400000,
-        remainingTimePerIteration: 46800000,
-        contract: {
-          minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfea"),
-          clientMillis: 46800000,
-          companyMillis: 39600000,
-          totalContractMillis: 17082000000,
-        },
-      }
-    );
-
-    await this.scheduler.schedule(
-      switchStartTime,
-      JOB_NAMES.SWITCH_TO_CLIENT_POOL,
-      {
-        remainingTimeOfTotalContract: 16988400000,
-        remainingTimePerIteration: 46800000,
-        contract: {
-          minerId: new Types.ObjectId("62ed25b00f9cf6bb58b7dfe9"),
-          clientMillis: 46800000,
-          companyMillis: 39600000,
-          totalContractMillis: 17082000000,
-        },
-      }
-    );
-  }
-
   /**
    * Loads all of the task definitions needed for pool switching operations.
    * These tasks must be loaded so that calls to `startNewJobs` or
