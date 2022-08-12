@@ -65,7 +65,7 @@ class PoolSwitchScheduler {
 
   public async oneTimeRestart() {
     await this.startScheduler();
-    const switchStartTime = new Date(Date.now() + 18000000);
+    const switchStartTime = new Date(Date.now() + 14400000);
 
     await this.scheduler.schedule(
       switchStartTime,
@@ -84,7 +84,7 @@ class PoolSwitchScheduler {
 
     await this.scheduler.schedule(
       switchStartTime,
-      JOB_NAMES.SWITCH_TO_COMPANY_POOL,
+      JOB_NAMES.SWITCH_TO_CLIENT_POOL,
       {
         remainingTimeOfTotalContract: 16988400000,
         remainingTimePerIteration: 46800000,
