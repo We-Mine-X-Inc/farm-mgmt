@@ -1,4 +1,7 @@
+import { logger } from "@/utils/logger";
+import { waitInMilliseconds } from "@/utils/timer";
 import AxiosDigestAuth from "@mhoc/axios-digest-auth";
+import { database } from "agenda/dist/agenda/database";
 import { SwitchPoolParams } from "./common-types";
 
 const ANTMINER_DEFAULTS = {
@@ -31,8 +34,8 @@ type MinerValidator = (param: PoolValidationInfo) => SwitchPoolParams;
 type PoolConfigInfo = {
   "bitmain-fan-ctrl": boolean;
   "bitmain-fan-pwm": string;
-  "freq-level": string;
-  "miner-mode": string;
+  "freq-level": number;
+  "miner-mode": number;
   pools: AntminerMinerPoolInfo[];
 };
 
@@ -49,7 +52,6 @@ async function getSytemInfo(ipAddress: string): Promise<PoolValidationInfo> {
 function verifyMinerIsForClient(params: SwitchPoolParams): MinerValidator {
   return (validationInfo: PoolValidationInfo) => {
     if (validationInfo.macAddress != params.macAddress) {
-      // send an email about miner ip address switching
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
     }
     return params;
@@ -70,8 +72,8 @@ function getMinerConfig(
       return {
         "bitmain-fan-ctrl": minerConfig["bitmain-fan-ctrl"],
         "bitmain-fan-pwm": minerConfig["bitmain-fan-pwm"],
-        "freq-level": minerConfig["bitmain-freq-level"],
-        "miner-mode": minerConfig["bitmain-work-mode"],
+        "freq-level": parseInt(minerConfig["bitmain-freq-level"]),
+        "miner-mode": parseInt(minerConfig["bitmain-work-mode"]),
         pools: pools,
       };
     });
@@ -82,11 +84,42 @@ function updateMinerConfig(
   switchPoolParams: SwitchPoolParams
 ): (poolConfig: PoolConfigInfo) => Promise<any> {
   return async (poolConfig: PoolConfigInfo) => {
+    const data = buildNewMinerConfig(switchPoolParams, poolConfig);
+    logger.info(
+      `Data passed for Bitmain update req: \n${JSON.stringify(data)}`
+    );
     return await ANTMINER_DIGESTAUTH.request({
       headers: { Accept: "application/json" },
       method: "POST",
       url: `http://${switchPoolParams.ipAddress}/cgi-bin/set_miner_conf.cgi`,
-      data: buildNewMinerConfig(switchPoolParams, poolConfig),
+      data: data,
+    });
+  };
+}
+
+function verifyLivePoolStatus(
+  switchPoolParams: SwitchPoolParams
+): () => Promise<any> {
+  return async () => {
+    return await ANTMINER_DIGESTAUTH.request({
+      headers: { Accept: "application/json" },
+      method: "GET",
+      url: `http://${switchPoolParams.ipAddress}/cgi-bin/pools.cgi`,
+    }).then((resp: any) => {
+      const currentPoolInfo = resp.data["POOLS"][0];
+      if (
+        !(
+          currentPoolInfo.url == switchPoolParams.pool.url &&
+          currentPoolInfo.user == switchPoolParams.pool.username &&
+          currentPoolInfo.status == "Alive" &&
+          currentPoolInfo.priority == 0
+        )
+      ) {
+        const errorMsg = `Bitmain miner pool update has not taken effect.
+        Please check miner: ${JSON.stringify(switchPoolParams)}`;
+        logger.error(errorMsg);
+        throw Error(errorMsg);
+      }
     });
   };
 }
@@ -114,5 +147,7 @@ export async function switchAntminerPool(
   return await getSytemInfo(params.ipAddress)
     .then(verifyMinerIsForClient(params))
     .then(getMinerConfig(params))
-    .then(updateMinerConfig(params));
+    .then(updateMinerConfig(params))
+    .then(() => waitInMilliseconds(5000)) // 5 seconds
+    .then(verifyLivePoolStatus(params));
 }

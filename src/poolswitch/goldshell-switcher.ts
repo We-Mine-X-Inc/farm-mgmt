@@ -1,4 +1,6 @@
 const axios = require("axios").default;
+import { logger } from "@/utils/logger";
+import { waitInMilliseconds } from "@/utils/timer";
 import { SwitchPoolParams } from "./common-types";
 
 const GOLDSHELL_DEFAULTS = {
@@ -118,8 +120,12 @@ async function deletePools(
   });
 }
 
-function addPool(switchPoolInfo: SwitchPoolParams) {
-  return async (sessionInfo: SessionInfo) => {
+function addPool(switchPoolParams: SwitchPoolParams) {
+  return async (sessionInfo: SessionInfo): Promise<SessionInfo> => {
+    const data = buildNewPool(switchPoolParams);
+    logger.info(
+      `Data passed for Goldshell update req: \n${JSON.stringify(data)}`
+    );
     return await axios({
       method: "put",
       url: `http://${sessionInfo.ipAddress}/mcb/newpool`,
@@ -129,18 +135,49 @@ function addPool(switchPoolInfo: SwitchPoolParams) {
         Accept: "application/json",
         Connection: "keep-alive",
       },
-      data: buildNewPool(switchPoolInfo),
+      data: buildNewPool(switchPoolParams),
+    }).then(() => {
+      return sessionInfo;
+    });
+  };
+}
+
+function verifyLivePoolStatus(switchPoolParams: SwitchPoolParams) {
+  return async (sessionInfo: SessionInfo) => {
+    return await axios({
+      method: "get",
+      url: `http://${sessionInfo.ipAddress}/mcb/pools`,
+      headers: {
+        Authorization: `Bearer ${sessionInfo.authToken}`,
+        "Content-Type": "application/json",
+        Connection: "keep-alive",
+      },
+    }).then((res) => {
+      const currentPoolInfo = res.data[0];
+      if (
+        !(
+          currentPoolInfo.url == switchPoolParams.pool.url &&
+          currentPoolInfo.user == switchPoolParams.pool.username &&
+          currentPoolInfo.active &&
+          currentPoolInfo["pool-priority"] == 0
+        )
+      ) {
+        const errorMsg = `Goldshell miner pool update has not taken effect.
+        Please check miner: ${JSON.stringify(switchPoolParams)}`;
+        logger.error(errorMsg);
+        throw Error(errorMsg);
+      }
     });
   };
 }
 
 function buildNewPool(
-  switchPoolInfo: SwitchPoolParams
+  switchPoolParams: SwitchPoolParams
 ): GoldshellMinerPoolInfo {
   return {
     legal: true,
-    url: switchPoolInfo.pool.url,
-    user: switchPoolInfo.pool.username,
+    url: switchPoolParams.pool.url,
+    user: switchPoolParams.pool.username,
     pass: GOLDSHELL_DEFAULTS.POOL_PWD,
     dragid: 0,
     active: false,
@@ -156,5 +193,7 @@ export async function switchGoldshellPool(
     .then(verifyMinerIsForClient(params))
     .then(getPools)
     .then(deletePools)
-    .then(addPool(params));
+    .then(addPool(params))
+    .then(waitInMilliseconds(5000)) // 5 seconds
+    .then(verifyLivePoolStatus(params));
 }
