@@ -63,22 +63,6 @@ class PoolSwitchScheduler {
     this.loadTasksDefinitions();
   }
 
-  public async oneTimeScheduling() {
-    await this.startScheduler();
-
-    await switchGoldshellPool({
-      macAddress: "28:E2:97:3E:5E:86",
-      ipAddress: "192.168.88.166",
-      pool: {
-        url: "stratum+tcp://kda-us.ss.poolmars.net:5200",
-        username:
-          "k:8a7100382db5f0017d994dc82a6fb0cf63de296ed5bf35a12560de2f8bc13a69+pps.kd6se_1",
-      },
-    }).catch((e) => {
-      console.log(e);
-    });
-  }
-
   /**
    * Loads all of the task definitions needed for pool switching operations.
    * These tasks must be loaded so that calls to `startNewJobs` or
