@@ -124,6 +124,14 @@ function verifyLivePoolStatus(
   };
 }
 
+async function rebootMiner(switchPoolParams: SwitchPoolParams) {
+  return await ANTMINER_DIGESTAUTH.request({
+    headers: { Accept: "application/json" },
+    method: "GET",
+    url: `http://${switchPoolParams.ipAddress}/cgi-bin/reboot.cgi`,
+  });
+}
+
 function buildNewMinerConfig(
   switchPoolInfo: SwitchPoolParams,
   poolConfig: PoolConfigInfo
@@ -142,12 +150,29 @@ function buildNewMinerConfig(
 }
 
 export async function switchAntminerPool(
-  params: SwitchPoolParams
+  params: SwitchPoolParams,
+  retries: number = 3
 ): Promise<any> {
   return await getSytemInfo(params.ipAddress)
     .then(verifyMinerIsForClient(params))
     .then(getMinerConfig(params))
     .then(updateMinerConfig(params))
-    .then(() => waitInMilliseconds(5000)) // 5 seconds
-    .then(verifyLivePoolStatus(params));
+    .then(() => waitInMilliseconds(10000)) // 10 seconds
+    .then(verifyLivePoolStatus(params))
+    .catch((e) => {
+      const remainingTries = retries - 1;
+      if (remainingTries <= 0) {
+        throw e;
+      }
+
+      logger.error(
+        `Error occurred while attempting to switch Antminer's Pool: ${params}.
+        Error msg: ${e}.
+        Will reboot the miner and try again.`
+      );
+
+      return rebootMiner(params)
+        .then(() => waitInMilliseconds(70000)) // 70 seconds
+        .then(() => switchAntminerPool(params, remainingTries));
+    });
 }

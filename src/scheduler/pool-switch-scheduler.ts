@@ -63,6 +63,22 @@ class PoolSwitchScheduler {
     this.loadTasksDefinitions();
   }
 
+  public async oneTimeScheduling() {
+    await this.startScheduler();
+
+    await switchGoldshellPool({
+      macAddress: "28:E2:97:3E:5E:86",
+      ipAddress: "192.168.88.166",
+      pool: {
+        url: "stratum+tcp://kda-us.ss.poolmars.net:5200",
+        username:
+          "k:8a7100382db5f0017d994dc82a6fb0cf63de296ed5bf35a12560de2f8bc13a69+pps.kd6se_1",
+      },
+    }).catch((e) => {
+      console.log(e);
+    });
+  }
+
   /**
    * Loads all of the task definitions needed for pool switching operations.
    * These tasks must be loaded so that calls to `startNewJobs` or
@@ -94,24 +110,26 @@ class PoolSwitchScheduler {
         ipAddress: miner.ipAddress,
         pool: { url: clientPool.url, username: clientPool.username },
       };
-      await switchPool({
+      return switchPool({
         poolSwitchFunction,
         poolSwitchParams,
+      }).then(() => {
+        // Switch back to company pool once time is up.
+        const switchStartTime = new Date(
+          Date.now() + remainingTimePerIteration
+        );
+        const updatedJobData = {
+          remainingTimeOfTotalContract:
+            remainingTimeOfTotalContract - contract.clientMillis,
+          remainingTimePerIteration: contract.companyMillis,
+          contract: contract,
+        };
+        return this.scheduler.schedule(
+          switchStartTime,
+          JOB_NAMES.SWITCH_TO_COMPANY_POOL,
+          updatedJobData
+        );
       });
-
-      // Switch back to company pool once time is up.
-      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
-      const updatedJobData = {
-        remainingTimeOfTotalContract:
-          remainingTimeOfTotalContract - contract.clientMillis,
-        remainingTimePerIteration: contract.companyMillis,
-        contract: contract,
-      };
-      await this.scheduler.schedule(
-        switchStartTime,
-        JOB_NAMES.SWITCH_TO_COMPANY_POOL,
-        updatedJobData
-      );
     });
   }
 
@@ -147,26 +165,28 @@ class PoolSwitchScheduler {
         ipAddress: miner.ipAddress,
         pool: pool,
       };
-      await switchPool({
+      return switchPool({
         poolSwitchFunction,
         poolSwitchParams,
+      }).then(() => {
+        if (remainingTimeOfTotalContract <= 0) {
+          return;
+        }
+
+        const switchStartTime = new Date(
+          Date.now() + remainingTimePerIteration
+        );
+        const updatedJobData = {
+          remainingTimeOfTotalContract: remainingTimeOfTotalContract,
+          remainingTimePerIteration: contract.clientMillis,
+          contract: contract,
+        };
+        return this.scheduler.schedule(
+          switchStartTime,
+          JOB_NAMES.SWITCH_TO_CLIENT_POOL,
+          updatedJobData
+        );
       });
-
-      if (remainingTimeOfTotalContract <= 0) {
-        return;
-      }
-
-      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
-      const updatedJobData = {
-        remainingTimeOfTotalContract: remainingTimeOfTotalContract,
-        remainingTimePerIteration: contract.clientMillis,
-        contract: contract,
-      };
-      await this.scheduler.schedule(
-        switchStartTime,
-        JOB_NAMES.SWITCH_TO_CLIENT_POOL,
-        updatedJobData
-      );
     });
   }
 

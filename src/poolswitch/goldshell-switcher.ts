@@ -171,6 +171,20 @@ function verifyLivePoolStatus(switchPoolParams: SwitchPoolParams) {
   };
 }
 
+function rebootMiner(params: SwitchPoolParams) {
+  return async (sessionInfo: SessionInfo) => {
+    return await axios({
+      method: "get",
+      url: `http://${sessionInfo.ipAddress}/mcb/restart`,
+      headers: {
+        Authorization: `Bearer ${sessionInfo.authToken}`,
+        "Content-Type": "application/json",
+        Connection: "keep-alive",
+      },
+    });
+  };
+}
+
 function buildNewPool(
   switchPoolParams: SwitchPoolParams
 ): GoldshellMinerPoolInfo {
@@ -186,7 +200,8 @@ function buildNewPool(
 }
 
 export async function switchGoldshellPool(
-  params: SwitchPoolParams
+  params: SwitchPoolParams,
+  retries: number = 3
 ): Promise<any> {
   return await loginToMiner(params.ipAddress)
     .then(getSettings)
@@ -194,6 +209,23 @@ export async function switchGoldshellPool(
     .then(getPools)
     .then(deletePools)
     .then(addPool(params))
-    .then(waitInMilliseconds(5000)) // 5 seconds
-    .then(verifyLivePoolStatus(params));
+    .then(waitInMilliseconds(10000)) // 10 seconds
+    .then(verifyLivePoolStatus(params))
+    .catch((e) => {
+      const remainingTries = retries - 1;
+      if (remainingTries <= 0) {
+        throw e;
+      }
+
+      logger.error(
+        `Error occurred while attempting to switch Goldshell's Pool: ${params}.
+        Error msg: ${e}.
+        Will reboot the miner and try again.`
+      );
+
+      return loginToMiner(params.ipAddress)
+        .then(rebootMiner(params))
+        .then(() => waitInMilliseconds(70000)) // 70 seconds
+        .then(() => switchGoldshellPool(params, remainingTries));
+    });
 }
