@@ -269,8 +269,9 @@ class PoolSwitchScheduler {
         job: job,
         lastTrackedUptime: miner.status.lastOnlineDate,
       });
+      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
       await this.scheduler.schedule(
-        remainingTimePerIteration,
+        switchStartTime,
         jobInfo.name,
         jobInfo.data
       );
