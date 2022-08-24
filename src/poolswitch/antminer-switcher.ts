@@ -34,7 +34,7 @@ type MinerValidator = (param: PoolValidationInfo) => SwitchPoolParams;
 type PoolConfigInfo = {
   "bitmain-fan-ctrl": boolean;
   "bitmain-fan-pwm": string;
-  "freq-level": number;
+  "freq-level": string;
   "miner-mode": number;
   pools: AntminerMinerPoolInfo[];
 };
@@ -72,7 +72,7 @@ function getMinerConfig(
       return {
         "bitmain-fan-ctrl": minerConfig["bitmain-fan-ctrl"],
         "bitmain-fan-pwm": minerConfig["bitmain-fan-pwm"],
-        "freq-level": parseInt(minerConfig["bitmain-freq-level"]),
+        "freq-level": minerConfig["bitmain-freq-level"],
         "miner-mode": parseInt(minerConfig["bitmain-work-mode"]),
         pools: pools,
       };
