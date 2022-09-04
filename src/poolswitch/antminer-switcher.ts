@@ -157,7 +157,7 @@ export async function switchAntminerPool(
     .then(verifyMinerIsForClient(params))
     .then(getMinerConfig(params))
     .then(updateMinerConfig(params))
-    .then(() => waitInMilliseconds(600000)) // 600 seconds = 10 minutes
+    .then(waitInMilliseconds(600000)) // 600 seconds = 10 minutes
     .then(verifyLivePoolStatus(params))
     .catch((e) => {
       const remainingTries = retries - 1;
