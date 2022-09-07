@@ -44,7 +44,7 @@ const POOL_SWITCH_FUNCTION = {
 export type MinerSwitchPoolContract = {
   clientMillis: number;
   companyMillis: number;
-  totalContractMillis: number;
+  finalContractDateInMillis: number;
   minerId: Types.ObjectId;
 };
 
@@ -75,11 +75,8 @@ class PoolSwitchScheduler {
 
   private loadSwitchToClientPoolTask() {
     this.scheduler.define(JOB_NAMES.SWITCH_TO_CLIENT_POOL, async (job) => {
-      const {
-        remainingTimeOfTotalContract,
-        remainingTimePerIteration,
-        contract,
-      } = job.attrs.data;
+      const { finalContractDateInMillis, timePerIteration, contract } =
+        job.attrs.data;
 
       const miner = await this.minerService.findMinerById(contract.minerId);
       const clientPool = await this.poolService.findPool({
@@ -94,18 +91,15 @@ class PoolSwitchScheduler {
         ipAddress: miner.ipAddress,
         pool: { url: clientPool.url, username: clientPool.username },
       };
-      return switchPool({
+      await switchPool({
         poolSwitchFunction,
         poolSwitchParams,
       }).then(() => {
         // Switch back to company pool once time is up.
-        const switchStartTime = new Date(
-          Date.now() + remainingTimePerIteration
-        );
+        const switchStartTime = new Date(Date.now() + timePerIteration);
         const updatedJobData = {
-          remainingTimeOfTotalContract:
-            remainingTimeOfTotalContract - contract.clientMillis,
-          remainingTimePerIteration: contract.companyMillis,
+          finalContractDateInMillis: finalContractDateInMillis,
+          timePerIteration: contract.companyMillis,
           contract: contract,
         };
         return this.scheduler.schedule(
@@ -119,11 +113,8 @@ class PoolSwitchScheduler {
 
   private loadSwitchToCompanyPoolTask() {
     this.scheduler.define(JOB_NAMES.SWITCH_TO_COMPANY_POOL, async (job) => {
-      const {
-        remainingTimeOfTotalContract,
-        remainingTimePerIteration,
-        contract,
-      } = job.attrs.data;
+      const { finalContractDateInMillis, timePerIteration, contract } =
+        job.attrs.data;
 
       const miner = await this.minerService.findMinerById(contract.minerId);
       const companyFeePool = await this.poolService.findPool({
@@ -136,33 +127,32 @@ class PoolSwitchScheduler {
       });
 
       // Switch to fee pool, or company revenue pool if contract completed.
+      const isContractCompleted = finalContractDateInMillis <= Date.now();
       const poolSwitchFunction = POOL_SWITCH_FUNCTION[miner.API];
-      const pool =
-        remainingTimeOfTotalContract <= 0
-          ? {
-              url: companyRevenuePool.url,
-              username: companyRevenuePool.username,
-            }
-          : { url: companyFeePool.url, username: companyFeePool.username };
+      const pool = isContractCompleted
+        ? {
+            url: companyRevenuePool.url,
+            username: companyRevenuePool.username,
+          }
+        : { url: companyFeePool.url, username: companyFeePool.username };
       const poolSwitchParams = {
         macAddress: miner.mac,
         ipAddress: miner.ipAddress,
         pool: pool,
       };
-      return switchPool({
+      await switchPool({
         poolSwitchFunction,
         poolSwitchParams,
       }).then(() => {
-        if (remainingTimeOfTotalContract <= 0) {
+        // use Date.now() < finalDate then return
+        if (isContractCompleted) {
           return;
         }
 
-        const switchStartTime = new Date(
-          Date.now() + remainingTimePerIteration
-        );
+        const switchStartTime = new Date(Date.now() + timePerIteration);
         const updatedJobData = {
-          remainingTimeOfTotalContract: remainingTimeOfTotalContract,
-          remainingTimePerIteration: contract.clientMillis,
+          finalContractDateInMillis: finalContractDateInMillis,
+          timePerIteration: contract.clientMillis,
           contract: contract,
         };
         return this.scheduler.schedule(
@@ -187,45 +177,8 @@ class PoolSwitchScheduler {
     minerSwitchPoolContracts.forEach(async (contract) => {
       await this.scheduler.now(JOB_NAMES.SWITCH_TO_CLIENT_POOL, {
         contract: contract,
-        remainingTimePerIteration: contract.clientMillis,
-        remainingTimeOfTotalContract: contract.totalContractMillis,
-      });
-    });
-  }
-
-  /**
-   * Resumes all pool switching jobs taking into account the proper remaining time
-   * of mining for either the client or the company.
-   */
-  public async resumeServerInterruptedJobs() {
-    await this.startScheduler();
-
-    const lastTrackedUptime = (
-      await this.uptimeTickService.findMostRecentTick()
-    ).datetime;
-    const jobs = await this.scheduler.jobs({
-      $or: [
-        { name: JOB_NAMES.SWITCH_TO_CLIENT_POOL },
-        { name: JOB_NAMES.SWITCH_TO_COMPANY_POOL },
-      ],
-      nextRunAt: { $exists: true },
-      disabled: { $exists: false },
-      lastFinishedAt: { $exists: false },
-    });
-    jobs.forEach(async (job: Job) => {
-      const remainingTime = calculateRemainingTime({
-        job,
-        lastTrackedUptime,
-      });
-      const switchStartTime = new Date(Date.now() + remainingTime);
-      await this.scheduler.schedule(
-        switchStartTime,
-        job.attrs.name,
-        job.attrs.data
-      );
-
-      await job.remove().catch((e: Error) => {
-        sendFailureToRemoveInterruptedJob(e.toString());
+        timePerIteration: contract.clientMillis,
+        finalContractDateInMillis: contract.finalContractDateInMillis,
       });
     });
   }
@@ -247,9 +200,7 @@ class PoolSwitchScheduler {
   }
 
   /**
-   * Finds the jobs associated with the given miner, calculates the time
-   * difference of when they should start based on when the interruption was
-   * noticed, and then creates a new scheduled switch for this new time.
+   * Finds the jobs associated with the given miner and resumes them.
    *
    * @param miner The miner to resume a pool switching jobs for.
    */
@@ -264,23 +215,11 @@ class PoolSwitchScheduler {
     });
 
     jobs.forEach(async (job: Job) => {
-      const jobInfo = job.attrs;
-      const remainingTimePerIteration = calculateRemainingTime({
-        job: job,
-        lastTrackedUptime: miner.status.lastOnlineDate,
-      });
-      const switchStartTime = new Date(Date.now() + remainingTimePerIteration);
-      await this.scheduler.schedule(
-        switchStartTime,
-        jobInfo.name,
-        jobInfo.data
-      );
+      await job.enable();
+
       sendResumeSwitchEmail({
         jobInfo: job.attrs,
-        jobData: jobInfo.data,
-      });
-      await job.remove().catch((e: Error) => {
-        sendFailureToRemoveInterruptedJob(e.toString());
+        jobData: job.attrs.data,
       });
     });
   }
@@ -315,21 +254,6 @@ async function switchPool(params: {
         error: error.toString(),
       });
     });
-}
-
-/**
- *
- * @param params The job needing to be changed; and the last time either the
- *  server or miner was seen online.
- *
- * @returns Amount of time in ms remaining for mining to the current pool.
- */
-function calculateRemainingTime(params: {
-  job: Job;
-  lastTrackedUptime: Date;
-}): number {
-  const jobExpectedStartTime = params.job.attrs.nextRunAt.getTime();
-  return jobExpectedStartTime - params.lastTrackedUptime.getTime();
 }
 
 const poolSwitchScheduler = new PoolSwitchScheduler();

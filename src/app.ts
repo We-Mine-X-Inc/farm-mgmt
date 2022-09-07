@@ -53,7 +53,6 @@ class App {
   }
 
   private async initiliazeSchedulers() {
-    await poolSwitchScheduler.resumeServerInterruptedJobs();
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }
