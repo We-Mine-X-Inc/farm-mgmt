@@ -144,7 +144,6 @@ class PoolSwitchScheduler {
         poolSwitchFunction,
         poolSwitchParams,
       }).then(() => {
-        // use Date.now() < finalDate then return
         if (isContractCompleted) {
           return;
         }
