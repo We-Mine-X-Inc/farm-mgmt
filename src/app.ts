@@ -53,14 +53,6 @@ class App {
   }
 
   private async initiliazeSchedulers() {
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed28e30f9cf6bb58b7dfef"),
-        clientMillis: 54000000,
-        companyMillis: 32400000,
-        finalContractDateInMillis: 1665979200000,
-      },
-    ]);
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }

@@ -1,18 +1,18 @@
 {
-  "name": "MinerPoolSwitching",
-  "version": "0.0.0",
+  "name": "miner_pool_switching",
+  "version": "1.0.0",
   "description": "TypeScript + Mongoose + MongoDB + Express API Server",
-  "author": "",
+  "author": "We Mine X Inc.",
   "license": "ISC",
   "scripts": {
-    "start": "npm run build && cross-env NODE_ENV=production node dist/server.js",
+    "start": "cross-env NODE_ENV=production nodemon",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "swc src -d dist --source-maps --copy-files",
     "build:tsc": "tsc && tsc-alias",
     "test": "jest --forceExit --detectOpenHandles",
     "lint": "eslint --ignore-path .gitignore --ext .ts src/",
     "lint:fix": "npm run lint -- --fix",
-    "deploy:prod": "npm run build && pm2 start ecosystem.config.js --only prod",
+    "deploy:prod": "pm2 start ecosystem.config.js --only prod",
     "deploy:dev": "pm2 start ecosystem.config.js --only dev"
   },
   "dependencies": {

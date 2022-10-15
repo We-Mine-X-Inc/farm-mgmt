@@ -8,8 +8,8 @@ class PoolSwitchController {
     next: NextFunction
   ) => {
     try {
-      const miningContract = req.body;
-      poolSwitchScheduler.startNewJobs(miningContract);
+      const miningContracts = req.body;
+      poolSwitchScheduler.startNewJobs(miningContracts);
       res.status(200);
     } catch (error) {
       next(error);

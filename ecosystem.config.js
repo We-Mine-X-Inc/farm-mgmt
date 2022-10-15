@@ -8,8 +8,9 @@
   apps: [
     {
       name: 'prod', // pm2 start App name
-      script: 'dist/server.js',
+      script: 'ts-node',
       exec_mode: 'cluster', // 'cluster' or 'fork'
+      args: '-r tsconfig-paths/register --transpile-only src/server.ts', // ts-node args
       instance_var: 'INSTANCE_ID', // instance variable
       instances: 1, // pm2 instance count
       autorestart: true, // auto restart if process crash
@@ -17,8 +18,8 @@
       ignore_watch: ['node_modules', 'logs'], // ignore files change
       max_memory_restart: '5G', // restart if process use more than 1G memory
       merge_logs: true, // if true, stdout and stderr will be merged and sent to pm2 log
-      output: './logs/access.log', // pm2 log file
-      error: './logs/error.log', // pm2 error log file
+      output: './logs/pm2/access.log', // pm2 log file
+      error: './logs/pm2/error.log', // pm2 error log file
       env: { // environment variable
         PORT: 3000,
         NODE_ENV: 'production',
@@ -36,8 +37,8 @@
       ignore_watch: ['node_modules', 'logs'], // ignore files change
       max_memory_restart: '1G', // restart if process use more than 1G memory
       merge_logs: true, // if true, stdout and stderr will be merged and sent to pm2 log
-      output: './logs/access.log', // pm2 log file
-      error: './logs/error.log', // pm2 error log file
+      output: './logs/pm2/access.log', // pm2 log file
+      error: './logs/pm2/error.log', // pm2 error log file
       env: { // environment variable
         PORT: 3000,
         NODE_ENV: 'development',
