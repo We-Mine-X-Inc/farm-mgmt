@@ -5,7 +5,7 @@
   "author": "We Mine X Inc.",
   "license": "ISC",
   "scripts": {
-    "start": "cross-env NODE_ENV=production nodemon",
+    "start": "ts-node -r tsconfig-paths/register --transpile-only src/server.ts",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "swc src -d dist --source-maps --copy-files",
     "build:tsc": "tsc && tsc-alias",
@@ -69,7 +69,7 @@
     "node-config": "^0.0.2",
     "node-gyp": "^8.1.0",
     "nodemon": "^2.0.19",
-    "pm2": "^5.2.0",
+    "pm2": "^5.2.2",
     "prettier": "^2.3.2",
     "supertest": "^6.2.2",
     "ts-jest": "^27.1.4",
