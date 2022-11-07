@@ -4,6 +4,10 @@
   "description": "TypeScript + Mongoose + MongoDB + Express API Server",
   "author": "We Mine X Inc.",
   "license": "ISC",
+  "engines" : { 
+    "npm" : ">=8.0.0 <9.0.0",
+    "node" : ">=16.0.0 <17.0.0"
+  },
   "scripts": {
     "start": "node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
