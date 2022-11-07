@@ -19,9 +19,10 @@ class App {
   public port: string | number;
 
   constructor(routes: Routes[]) {
+    console.log("creating app");
     this.app = express();
     this.env = NODE_ENV || "development";
-    this.port = PORT || 3000;
+    this.port = PORT || 5000;
 
     this.connectToDatabase();
     this.initiliazeSchedulers();
@@ -53,14 +54,6 @@ class App {
   }
 
   private async initiliazeSchedulers() {
-    await poolSwitchScheduler.startNewJobs([
-      {
-        minerId: new Types.ObjectId("62ed28e30f9cf6bb58b7dfef"),
-        clientMillis: 10800000,
-        companyMillis: 18000000,
-        finalContractDateInMillis: 1668480915000,
-      },
-    ]);
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }
