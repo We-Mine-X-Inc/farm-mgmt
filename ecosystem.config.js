@@ -8,9 +8,8 @@
   apps: [
     {
       name: 'prod', // pm2 start App name
-      script: 'ts-node',
+      script: './dist/server.js', // node
       exec_mode: 'cluster', // 'cluster' or 'fork'
-      args: '-r tsconfig-paths/register --transpile-only src/server.ts', // ts-node args
       instance_var: 'INSTANCE_ID', // instance variable
       instances: 1, // pm2 instance count
       autorestart: true, // auto restart if process crash
@@ -27,8 +26,7 @@
     },
     {
       name: 'dev', // pm2 start App name
-      script: 'ts-node', // ts-node
-      args: '-r tsconfig-paths/register --transpile-only src/server.ts', // ts-node args
+      script: './dist/server.js', // node
       exec_mode: 'cluster', // 'cluster' or 'fork'
       instance_var: 'INSTANCE_ID', // instance variable
       instances: 1, // pm2 instance count
