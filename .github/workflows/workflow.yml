@@ -23,7 +23,7 @@ jobs:
           aws-region: us-east-2
       # Step 4
       - name: Build Application and Run unit Test
-        run: npm install & npm run build:tsc
+        run: npm i --save-dev & npm run build:tsc
 
   continuous-deployment:
     runs-on: ubuntu-latest
