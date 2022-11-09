@@ -15,6 +15,7 @@ class UserService {
   }
 
   public async findUserById(userId: Types.ObjectId): Promise<User> {
+    console.log(userId);
     if (isEmpty(userId)) throw new HttpException(400, "You're not userId");
 
     const findUser: User = await this.users.findOne({ _id: userId });
