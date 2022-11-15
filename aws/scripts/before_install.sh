@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo $HOME
+export HOME="/home/ubuntu"
 
 # Delete the old  directory as needed.
 if [ -d /home/ubuntu/applications/farm-mgmt ]; then
