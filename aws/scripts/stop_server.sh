@@ -1,2 +1,4 @@
 #!/bin/bash
-$(dirname $(nvm which current))/pm2 kill
+echo "Hello world"
+
+pm2 kill
