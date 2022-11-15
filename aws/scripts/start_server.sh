@@ -1,3 +1,3 @@
 #!/bin/bash
 cd /home/ubuntu/applications/farm-mgmt
-npm run deploy:$NODE_ENV
+$(dirname $(nvm which current))/npm run deploy:$NODE_ENV
