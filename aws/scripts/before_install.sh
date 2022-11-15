@@ -1,5 +1,6 @@
 #!/bin/bash
-set -xe
+
+echo $HOME
 
 # Delete the old  directory as needed.
 if [ -d /home/ubuntu/applications/farm-mgmt ]; then
