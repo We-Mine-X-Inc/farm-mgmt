@@ -6,4 +6,4 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 $(dirname $(nvm which current))/npm install
-$(dirname $(nvm which current))/npm run deploy:$NODE_ENV
+$(dirname $(nvm which current))/npm run deploy:dev
