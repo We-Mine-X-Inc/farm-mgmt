@@ -5,6 +5,7 @@ on:
 
 jobs:
   continuous-deployment:
+    environment: dev
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
