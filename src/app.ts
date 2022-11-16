@@ -11,6 +11,7 @@ import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import serverUptimeScheduler from "./scheduler/server-uptime-scheduler";
 import minerStatusScheduler from "./scheduler/miner-status-scheduler";
+import poolSwitchScheduler from "./scheduler/pool-switch-scheduler";
 
 class App {
   public app: express.Application;
@@ -52,6 +53,7 @@ class App {
   }
 
   private async initiliazeSchedulers() {
+    await poolSwitchScheduler.startScheduler();
     await serverUptimeScheduler.startJobs();
     await minerStatusScheduler.startJobs();
   }

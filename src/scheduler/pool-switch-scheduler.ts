@@ -223,7 +223,7 @@ class PoolSwitchScheduler {
     });
   }
 
-  private async startScheduler() {
+  public async startScheduler() {
     if (!this.schedulerStarted) {
       await this.scheduler.start();
       this.schedulerStarted = true;
