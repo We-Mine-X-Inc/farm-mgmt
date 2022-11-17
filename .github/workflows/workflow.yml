@@ -1,11 +1,11 @@
-name: Dev CI/CD Pipeline
+name: Prod CI/CD Pipeline
 on:
   push:
     branches: [main]
 
 jobs:
   continuous-deployment:
-    environment: dev
+    environment: prod
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
