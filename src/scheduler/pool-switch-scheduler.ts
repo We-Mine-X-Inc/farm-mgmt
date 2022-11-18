@@ -75,7 +75,7 @@ class PoolSwitchScheduler {
 
   private loadSwitchToClientPoolTask() {
     this.scheduler.define(JOB_NAMES.SWITCH_TO_CLIENT_POOL, async (job) => {
-      const { finalContractDateInMillis, timePerIteration, contract } =
+      const { finalContractDateInMillis, timeUntilNextSwitch, contract } =
         job.attrs.data;
 
       const miner = await this.minerService.findMinerById(contract.minerId);
@@ -96,10 +96,10 @@ class PoolSwitchScheduler {
         poolSwitchParams,
       }).then(() => {
         // Switch back to company pool once time is up.
-        const switchStartTime = new Date(Date.now() + timePerIteration);
+        const switchStartTime = new Date(Date.now() + timeUntilNextSwitch);
         const updatedJobData = {
           finalContractDateInMillis: finalContractDateInMillis,
-          timePerIteration: contract.companyMillis,
+          timeUntilNextSwitch: contract.companyMillis,
           contract: contract,
         };
         return this.scheduler.schedule(
@@ -113,7 +113,7 @@ class PoolSwitchScheduler {
 
   private loadSwitchToCompanyPoolTask() {
     this.scheduler.define(JOB_NAMES.SWITCH_TO_COMPANY_POOL, async (job) => {
-      const { finalContractDateInMillis, timePerIteration, contract } =
+      const { finalContractDateInMillis, timeUntilNextSwitch, contract } =
         job.attrs.data;
 
       const miner = await this.minerService.findMinerById(contract.minerId);
@@ -148,10 +148,10 @@ class PoolSwitchScheduler {
           return;
         }
 
-        const switchStartTime = new Date(Date.now() + timePerIteration);
+        const switchStartTime = new Date(Date.now() + timeUntilNextSwitch);
         const updatedJobData = {
           finalContractDateInMillis: finalContractDateInMillis,
-          timePerIteration: contract.clientMillis,
+          timeUntilNextSwitch: contract.clientMillis,
           contract: contract,
         };
         return this.scheduler.schedule(
@@ -176,7 +176,7 @@ class PoolSwitchScheduler {
     minerSwitchPoolContracts.forEach(async (contract) => {
       await this.scheduler.now(JOB_NAMES.SWITCH_TO_CLIENT_POOL, {
         contract: contract,
-        timePerIteration: contract.clientMillis,
+        timeUntilNextSwitch: contract.clientMillis,
         finalContractDateInMillis: contract.finalContractDateInMillis,
       });
     });
