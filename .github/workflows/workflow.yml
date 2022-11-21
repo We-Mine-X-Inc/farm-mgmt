@@ -8,10 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Step 1
-      - name: Build Application and Run unit Test
+      - name: Use Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
+      # Step 2
+      - name: Build Application and Run unit Test
         run: npm ci && npm run build:tsc && npm test
 
   continuous-deployment:
