@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import poolSwitchScheduler from "@/scheduler/pool-switch-scheduler";
+import PoolSwitchScheduler from "@/scheduler/pool-switch-scheduler";
 
 class PoolSwitchController {
+  private poolSwitchScheduler = PoolSwitchScheduler.get();
+
   public startPoolSwitching = async (
     req: Request,
     res: Response,
@@ -9,7 +11,7 @@ class PoolSwitchController {
   ) => {
     try {
       const miningContracts = req.body;
-      poolSwitchScheduler.startNewJobs(miningContracts);
+      this.poolSwitchScheduler.startNewJobs(miningContracts);
       res.status(200);
     } catch (error) {
       next(error);

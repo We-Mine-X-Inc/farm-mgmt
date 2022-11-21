@@ -3,25 +3,37 @@ import { dbConnection } from "@databases";
 import ping from "ping";
 import MinerService from "@/services/miners.service";
 import { MinerNetworkStatus } from "@/interfaces/miners.interface";
-import poolSwitchScheduler from "./pool-switch-scheduler";
 import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
+import { agendaSchedulerManager } from "./agenda-scheduler-manager";
+import PoolSwitchScheduler from "./pool-switch-scheduler";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
 };
 
+let minerStatusScheduler;
+
 class MinerStatusScheduler {
-  private scheduler = new Agenda({
+  private scheduler: Agenda = agendaSchedulerManager.create({
     maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
     defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "minerStatusJobs" },
   });
   private minerService = new MinerService();
+  private poolSwitchScheduler = PoolSwitchScheduler.get();
 
-  constructor() {
+  static get() {
+    if (minerStatusScheduler) {
+      return minerStatusScheduler;
+    }
+    minerStatusScheduler = new MinerStatusScheduler();
+    return minerStatusScheduler;
+  }
+
+  private constructor() {
     this.loadTasksDefinitions();
   }
 
@@ -41,7 +53,7 @@ class MinerStatusScheduler {
               },
             };
             this.minerService.updateMiner(miner._id, newMinerInfo);
-            await poolSwitchScheduler.disableJobForMiner(miner);
+            await this.poolSwitchScheduler.disableJobForMiner(miner);
           }
 
           // Previously offline and now back online.
@@ -54,7 +66,7 @@ class MinerStatusScheduler {
               },
             };
             this.minerService.updateMiner(miner._id, newMinerInfo);
-            poolSwitchScheduler.resumeMinerNetworkInterruptedJob(miner);
+            this.poolSwitchScheduler.resumeMinerNetworkInterruptedJob(miner);
           }
         });
       });
@@ -74,6 +86,4 @@ class MinerStatusScheduler {
   }
 }
 
-const minerStatusScheduler = new MinerStatusScheduler();
-
-export default minerStatusScheduler;
+export default MinerStatusScheduler;

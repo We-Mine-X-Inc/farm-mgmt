@@ -1,7 +1,6 @@
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
-import { connect, set } from "mongoose";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { NODE_ENV, PORT, LOG_FORMAT } from "@config";
@@ -9,9 +8,9 @@ import { dbConnection } from "@databases";
 import { Routes } from "@interfaces/routes.interface";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
-import serverUptimeScheduler from "./scheduler/server-uptime-scheduler";
-import minerStatusScheduler from "./scheduler/miner-status-scheduler";
-import poolSwitchScheduler from "./scheduler/pool-switch-scheduler";
+import PoolSwitchScheduler from "./scheduler/pool-switch-scheduler";
+import ServerUptimeScheduler from "./scheduler/server-uptime-scheduler";
+import MinerStatusScheduler from "./scheduler/miner-status-scheduler";
 
 class App {
   public app: express.Application;
@@ -46,16 +45,20 @@ class App {
 
   private connectToDatabase() {
     if (this.env !== "production") {
-      set("debug", true);
+      dbConnection.set("debug", true);
     }
 
-    connect(dbConnection.url);
+    dbConnection.connect();
   }
 
   private async initiliazeSchedulers() {
-    await poolSwitchScheduler.startScheduler();
-    await serverUptimeScheduler.startJobs();
-    await minerStatusScheduler.startJobs();
+    if (this.env == "test") {
+      return;
+    }
+
+    await PoolSwitchScheduler.get().startScheduler();
+    await ServerUptimeScheduler.get().startJobs();
+    await MinerStatusScheduler.get().startJobs();
   }
 
   private initializeMiddlewares() {

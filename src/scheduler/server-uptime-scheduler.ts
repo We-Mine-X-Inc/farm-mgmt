@@ -6,13 +6,16 @@ import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
+import { agendaSchedulerManager } from "./agenda-scheduler-manager";
 
 const JOB_NAMES = {
   UPTIME_PROBE: "Track Process Uptime",
 };
 
+let serverUptimeScheduler;
+
 class ServerUptimeScheduler {
-  private scheduler = new Agenda({
+  private scheduler: Agenda = agendaSchedulerManager.create({
     maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
     defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "serverUptimeJobs" },
@@ -20,8 +23,16 @@ class ServerUptimeScheduler {
 
   public uptimeTickService: UptimeTickService = new UptimeTickService();
 
-  constructor() {
+  private constructor() {
     this.loadTasksDefinitions();
+  }
+
+  static get() {
+    if (serverUptimeScheduler) {
+      return serverUptimeScheduler;
+    }
+    serverUptimeScheduler = new ServerUptimeScheduler();
+    return serverUptimeScheduler;
   }
 
   private loadTasksDefinitions() {
@@ -45,6 +56,4 @@ class ServerUptimeScheduler {
   }
 }
 
-const serverUptimeScheduler = new ServerUptimeScheduler();
-
-export default serverUptimeScheduler;
+export default ServerUptimeScheduler;

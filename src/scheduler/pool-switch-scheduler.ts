@@ -6,21 +6,19 @@ import MinerService from "@/services/miners.service";
 import PoolService from "@/services/pools.service";
 import { Miner, MinerApiType } from "@/interfaces/miners.interface";
 import { PoolPurposeType } from "@/interfaces/pools.interface";
-import UptimeTickService from "@/services/uptime-tick.service";
 import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
 import {
   sendFailureSwitchEmail,
-  sendFailureToRemoveInterruptedJob,
   sendResumeSwitchEmail,
   sendSuccessfulSwitchEmail,
 } from "@/alerts/notifications";
 import { SwitchPoolParams } from "@/poolswitch/common-types";
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 import { Job } from "agenda";
-import { UptimeTick } from "@/interfaces/uptime-tick.interface";
+import { agendaSchedulerManager } from "./agenda-scheduler-manager";
 
 const POOL_SWITCH_STATUS = {
   CLIENT_SESSION_COMPLETED: "CLIENT_SESSION_COMPLETED",
@@ -48,18 +46,27 @@ export type MinerSwitchPoolContract = {
   minerId: Types.ObjectId;
 };
 
+let poolSwitchScheduler;
+
 class PoolSwitchScheduler {
   private minerService: MinerService = new MinerService();
   private poolService: PoolService = new PoolService();
-  private uptimeTickService: UptimeTickService = new UptimeTickService();
-  private scheduler: Agenda = new Agenda({
+  private scheduler: Agenda = agendaSchedulerManager.create({
     maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
     defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "poolSwitchJobs" },
   });
   private schedulerStarted: boolean = false;
 
-  constructor() {
+  static get() {
+    if (poolSwitchScheduler) {
+      return poolSwitchScheduler;
+    }
+    poolSwitchScheduler = new PoolSwitchScheduler();
+    return poolSwitchScheduler;
+  }
+
+  private constructor() {
     this.loadTasksDefinitions();
   }
 
@@ -255,6 +262,4 @@ async function switchPool(params: {
     });
 }
 
-const poolSwitchScheduler = new PoolSwitchScheduler();
-
-export default poolSwitchScheduler;
+export default PoolSwitchScheduler;

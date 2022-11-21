@@ -4,6 +4,7 @@ node_modules
 .DS_Store
 
 data
+dist
 
 src/logs
 src/.DS_Store

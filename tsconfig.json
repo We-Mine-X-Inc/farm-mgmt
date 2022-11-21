@@ -59,6 +59,9 @@
       "@routes/*": [
         "routes/*"
       ],
+      "@scheduler/*": [
+        "scheduler/*"
+      ],
       "@services/*": [
         "services/*"
       ],

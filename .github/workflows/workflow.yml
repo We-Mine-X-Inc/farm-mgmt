@@ -4,6 +4,16 @@ on:
     branches: [main]
 
 jobs:
+continuous-integration:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1
+      - name: Build Application and Run unit Test
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+        run: npm ci && npm run build:tsc && npm test
+
   continuous-deployment:
     environment: prod
     runs-on: ubuntu-latest
