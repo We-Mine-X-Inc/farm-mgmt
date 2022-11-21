@@ -13,6 +13,11 @@ jobs:
         with:
           node-version: 18
       # Step 2
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with: ${{ github.repository }}
+        ref: ${{ github.sha }}
+      # Step 3
       - name: Build Application and Run unit Test
         run: npm install && npm run build:tsc && npm test
 
