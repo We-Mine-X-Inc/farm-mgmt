@@ -1,0 +1,33 @@
+<html>
+
+<head>
+    <title>Facility Setup/Testing</title>
+</head>
+
+<body>
+    <h2>Generate QR Code for Friendly Miner Id</h2>
+    <div>
+        <input id="friendlyMinerId" placeholder="Friendly Miner ID" />
+        <button onclick="generateCode()">Generate QR Code</button>
+        <script type="text/javascript">
+            function generateCode() {
+                const friendlyMinerId = document.getElementById("friendlyMinerId").value;
+                window.location.href = `/facility-setup/qrcode/${friendlyMinerId}`;
+            }
+        </script>
+    </div>
+
+    <h2>Manage Facility for Testing Purposes</h2>
+    <div>
+        <form action="/facility-info" method="PUT">
+            <input hidden name="id" value="63dde05f88d9a96159b0d2c4">
+
+            <input type="checkbox" id="isAutoManaged" name="isAutoManaged" value="true">
+            <label for="isAutoManaged"> Is Auto Managed</label><br>
+
+            <input type="submit" value="Update Facility">
+        </form>
+    </div>
+</body>
+
+</html>

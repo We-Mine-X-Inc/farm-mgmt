@@ -1,14 +1,26 @@
 import { Agenda } from "agenda/es";
 import { dbConnection } from "@databases";
-import ping from "ping";
-import MinerService from "@/services/miners.service";
-import { MinerNetworkStatus } from "@/interfaces/miners.interface";
+import MinerService from "@/services/miner.service";
+import { MinerNetworkStatus } from "@/interfaces/miner.interface";
 import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
 import { agendaSchedulerManager } from "./agenda-scheduler-manager";
+import {
+  sendMinerOfflineNotification,
+  sendMinerOnlineNotification,
+} from "@/alerts/notifications";
+import { logger } from "@/utils/logger";
+import {
+  FAN_SPEED_VERIFICATION_FUNCTION,
+  HASHRATE_VERIFICATION_FUNCTION,
+  POOL_VERIFICATION_FUNCTION,
+  TEMPERATURE_VERIFICATION_FUNCTION,
+} from "@/poolswitch/miner-operation-maps";
+import ContractService from "@/services/contract.service";
 import PoolSwitchScheduler from "./pool-switch-scheduler";
+import FacilityInfoService from "@/services/facility-info.service";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
@@ -16,14 +28,26 @@ const JOB_NAMES = {
 
 let minerStatusScheduler;
 
+/**
+ * Periodically checks miner health for all miners. Responsible for validating:
+ *    - online status
+ *    - hashrate
+ *    - temperature
+ *    - fan speed
+ *    - pool setting
+ * Execution happens in-sync to avoid overwhelming a miner.
+ */
 class MinerStatusScheduler {
   private scheduler: Agenda = agendaSchedulerManager.create({
     maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
     defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
     db: { address: dbConnection.url, collection: "minerStatusJobs" },
   });
+  private contractService = new ContractService();
   private minerService = new MinerService();
+  private facilityInfoService = new FacilityInfoService();
   private poolSwitchScheduler = PoolSwitchScheduler.get();
+  private isSchedulerStarted = false;
 
   static get() {
     if (minerStatusScheduler) {
@@ -39,50 +63,81 @@ class MinerStatusScheduler {
 
   private loadTasksDefinitions() {
     this.scheduler.define(JOB_NAMES.STATUS_PROBE, async (job) => {
-      (await this.minerService.findAllMiners()).forEach((miner) => {
-        ping.sys.probe(miner.ipAddress, async (isAlive) => {
-          const previousStatus = miner.status.networkStatus;
+      // Replace with logic that is per machine and within the RackInfo.
+      const facilityInfos =
+        await this.facilityInfoService.findAllFacilityInfos();
+      if (!facilityInfos[0].isAutoManaged) {
+        return;
+      }
 
-          // Previously online and now offline.
-          if (!isAlive && previousStatus == MinerNetworkStatus.ONLINE) {
-            const newMinerInfo = {
-              ...miner,
-              status: {
-                lastOnlineDate: new Date(),
-                networkStatus: MinerNetworkStatus.OFFLINE,
-              },
-            };
-            this.minerService.updateMiner(miner._id, newMinerInfo);
-            await this.poolSwitchScheduler.disableJobForMiner(miner);
-          }
+      // Do not ping a miner if it's being switched. Need to also handle company miners.
+      const miners = (await this.minerService.findAllMiners()).filter(
+        (miner) => !miner.status.poolIsBeingSwitched
+      );
 
-          // Previously offline and now back online.
-          if (isAlive && previousStatus == MinerNetworkStatus.OFFLINE) {
-            const newMinerInfo = {
-              ...miner,
-              status: {
-                lastOnlineDate: new Date(),
-                networkStatus: MinerNetworkStatus.ONLINE,
-              },
-            };
-            this.minerService.updateMiner(miner._id, newMinerInfo);
-            this.poolSwitchScheduler.resumeMinerNetworkInterruptedJob(miner);
-          }
+      for (let miner of miners) {
+        const pools = await this.contractService.findContractByMiner({
+          minerId: miner._id,
         });
-      });
+        const activePoolIndex =
+          this.poolSwitchScheduler.getActivePoolIndexForMiner(miner);
+        const checkHashrate = HASHRATE_VERIFICATION_FUNCTION[miner.API];
+        const checkTemperature = TEMPERATURE_VERIFICATION_FUNCTION[miner.API];
+        const checkFanSpeed = FAN_SPEED_VERIFICATION_FUNCTION[miner.API];
+        const checkPoolStatus = POOL_VERIFICATION_FUNCTION[miner.API];
+        const previousStatus = miner.status.networkStatus;
+
+        await checkPoolStatus({ miner, pool: pools[activePoolIndex] })
+          .then(() => checkHashrate(miner))
+          .then(() => checkFanSpeed(miner))
+          .then(() => checkTemperature(miner))
+          .then(() => {
+            // Previously offline and now back online.
+            if (previousStatus == MinerNetworkStatus.OFFLINE) {
+              const newMinerInfo = {
+                ...miner,
+                status: {
+                  ...miner.status,
+                  lastOnlineDate: new Date(),
+                  networkStatus: MinerNetworkStatus.ONLINE,
+                },
+              };
+              return this.minerService
+                .updateMiner(miner._id, newMinerInfo)
+                .then(() => {
+                  sendMinerOnlineNotification(miner);
+                });
+            }
+          })
+          .catch(async (error) => {
+            // Previously online and now offline.
+            if (previousStatus == MinerNetworkStatus.ONLINE) {
+              const newMinerInfo = {
+                ...miner,
+                status: {
+                  ...miner.status,
+                  lastOnlineDate: new Date(),
+                  networkStatus: MinerNetworkStatus.OFFLINE,
+                },
+              };
+              await this.minerService.updateMiner(miner._id, newMinerInfo);
+              sendMinerOfflineNotification(miner);
+              logger.error(error);
+            }
+          });
+      }
     });
   }
 
-  public async startJobs() {
+  public async startScheduler() {
+    if (this.isSchedulerStarted) {
+      return;
+    }
+
     await this.scheduler.start();
 
-    await this.removePreviousJobs();
-
+    this.isSchedulerStarted = true;
     this.scheduler.every("5 minutes", JOB_NAMES.STATUS_PROBE);
-  }
-
-  private async removePreviousJobs() {
-    (await this.scheduler.jobs()).forEach((job) => job.remove());
   }
 }
 

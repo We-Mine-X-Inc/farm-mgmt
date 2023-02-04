@@ -1,10 +1,12 @@
-type MinMinerPoolInfo = {
-  url: string;
-  username: string;
-};
+import { Miner } from "@/interfaces/miner.interface";
+import { Pool } from "@/interfaces/pool.interface";
 
 export type SwitchPoolParams = {
-  ipAddress: string;
-  macAddress: string;
-  pool: MinMinerPoolInfo;
+  miner: Miner;
+  pool: Pool;
+};
+
+export type VerifyPoolParams = {
+  miner: Miner;
+  pool: Pool;
 };

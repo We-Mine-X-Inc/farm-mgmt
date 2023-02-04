@@ -57,8 +57,8 @@ class App {
     }
 
     await PoolSwitchScheduler.get().startScheduler();
-    await ServerUptimeScheduler.get().startJobs();
-    await MinerStatusScheduler.get().startJobs();
+    await ServerUptimeScheduler.get().startScheduler();
+    await MinerStatusScheduler.get().startScheduler();
   }
 
   private initializeMiddlewares() {

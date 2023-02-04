@@ -1,5 +1,5 @@
 {
-  "name": "miner_pool_switching",
+  "name": "app_services",
   "version": "1.0.0",
   "description": "TypeScript + Mongoose + MongoDB + Express API Server",
   "author": "We Mine X Inc.",
@@ -7,14 +7,14 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
+    "prod": "cross-env NODE_ENV=production nodemon",
     "build": "swc src -d dist --source-maps --copy-files",
     "build:tsc": "tsc && tsc-alias",
     "test": "jest --forceExit --detectOpenHandles",
     "lint": "eslint --ignore-path .gitignore --ext .ts src/",
     "lint:fix": "npm run lint -- --fix",
-    "deploy:prod": "npm run build:tsc && pm2 start ecosystem.config.js --only prod",
-    "deploy:dev": "npm run build:tsc && pm2 start ecosystem.config.js --only dev",
-    "startAgenda": "pm2 start ./node_modules/agendash/bin/agendash-standalone.js -- --db='mongodb://localhost:27017' --collection='poolSwitchJobs' --port=3002"
+    "deploy:prod": "npm run build:tsc && pm2 start ecosystem.config.js --only all_services_prod",
+    "deploy:dev": "npm run build:tsc && pm2 start ecosystem.config.js --only all_services_dev"
   },
   "dependencies": {
     "@mhoc/axios-digest-auth": "^0.8.0",
@@ -38,6 +38,7 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.7.7",
     "ping": "^0.4.2",
+    "qrcode": "^1.5.1",
     "swagger-jsdoc": "^6.0.0",
     "swagger-ui-express": "^4.1.6",
     "uuid": "^8.3.2",

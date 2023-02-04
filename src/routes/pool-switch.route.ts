@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Routes } from "@interfaces/routes.interface";
 import validationMiddleware from "@middlewares/validation.middleware";
-import { MinerSwitchPoolContractDto } from "@/dtos/pool-switch.dto";
+import { StartPoolSwitchDto } from "@/dtos/pool-switch.dto";
 import PoolSwitchController from "@/controllers/pool-switch.controller";
 
 class PoolSwitchRoute implements Routes {
@@ -16,7 +16,7 @@ class PoolSwitchRoute implements Routes {
   private initializeRoutes() {
     this.router.post(
       `${this.path}/start`,
-      validationMiddleware(Array<MinerSwitchPoolContractDto>, "body"),
+      validationMiddleware(Array<StartPoolSwitchDto>, "body"),
       this.poolSwitchController.startPoolSwitching
     );
   }

@@ -23,7 +23,6 @@ jobs:
         run: npm install && npm run build:tsc && npm test
 
   continuous-deployment:
-    environment: dev
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -39,7 +38,7 @@ jobs:
         id: deploy
         run: |
           aws deploy create-deployment \
-            --application-name Pool-Switching-App \
+            --application-name AllAppsServer \
             --deployment-group-name ${{ secrets.AWS_DEPLOYMENT_GROUP }} \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --github-location repository=${{ github.repository }},commitId=${{ github.sha }}

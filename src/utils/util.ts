@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { format as prettyFormat } from "pretty-format";
 
 /**
  * @method isEmpty
@@ -7,6 +8,7 @@ import { Types } from "mongoose";
  * @description this value is Empty Check
  */
 export const isEmpty = (value: string | number | object): boolean => {
+  console.log(`typeof: ${typeof value}`);
   if (value === null) {
     return true;
   } else if (typeof value !== "number" && value === "") {
@@ -14,9 +16,7 @@ export const isEmpty = (value: string | number | object): boolean => {
   } else if (typeof value === "undefined" || value === undefined) {
     return true;
   } else if (value !== null && value instanceof Types.ObjectId) {
-    console.log("reached");
-    console.log(value._id);
-    return isEmpty(value._id);
+    return false;
   } else if (
     value !== null &&
     typeof value === "object" &&

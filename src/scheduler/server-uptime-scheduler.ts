@@ -43,7 +43,7 @@ class ServerUptimeScheduler {
     });
   }
 
-  public async startJobs() {
+  public async startScheduler() {
     await this.scheduler.start();
 
     await this.removePreviousJobs();

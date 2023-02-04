@@ -1,16 +1,10 @@
 import { IsNumber, IsObject } from "class-validator";
 import { Types } from "mongoose";
 
-export class MinerSwitchPoolContractDto {
-  @IsNumber()
-  public clientMillis: number;
-
-  @IsNumber()
-  public companyMillis: number;
-
-  @IsNumber()
-  public totalContractMillis: number;
-
+export class StartPoolSwitchDto {
   @IsObject()
-  public minerId: Types.ObjectId;
+  public contractId: Types.ObjectId;
+
+  @IsNumber()
+  public startingPoolIndex: string;
 }

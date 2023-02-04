@@ -7,7 +7,7 @@
  module.exports = {
   apps: [
     {
-      name: 'prod', // pm2 start App name
+      name: 'all_services_prod', // pm2 start App name
       script: './dist/server.js', // node
       exec_mode: 'cluster', // 'cluster' or 'fork'
       instance_var: 'INSTANCE_ID', // instance variable
@@ -25,7 +25,7 @@
       },
     },
     {
-      name: 'dev', // pm2 start App name
+      name: 'all_services_dev', // pm2 start App name
       script: './dist/server.js', // node
       exec_mode: 'cluster', // 'cluster' or 'fork'
       instance_var: 'INSTANCE_ID', // instance variable
