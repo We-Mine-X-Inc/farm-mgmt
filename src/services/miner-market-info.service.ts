@@ -1,6 +1,9 @@
 import { CreateMinerMarketInfoDto } from "@/dtos/miner-market-info.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { MinerMarketInfo } from "@/interfaces/miner-market-info.interface";
+import {
+  MinerMarketInfo,
+  MINER_MARKET_INFO_FIELDS_TO_POPULATE,
+} from "@/interfaces/miner-market-info.interface";
 import minerMarketInfoModel from "@/models/miner-market-info.model";
 import { isEmpty } from "@utils/util";
 import { Types } from "mongoose";
@@ -15,7 +18,7 @@ class MinerMarketInfoService {
   public async findAllMinerMarketInfos(): Promise<MinerMarketInfo[]> {
     const minerMarketInfos: MinerMarketInfo[] = await this.minerMarketInfos
       .find()
-      .lean();
+      .populate(MINER_MARKET_INFO_FIELDS_TO_POPULATE);
     return minerMarketInfos;
   }
 
@@ -26,9 +29,10 @@ class MinerMarketInfoService {
       throw new HttpException(400, "You're not minerMarketInfoId");
 
     const findMinerMarketInfo: MinerMarketInfo =
-      await this.minerMarketInfos.findOne({
-        _id: minerMarketInfoId,
-      });
+      await await this.minerMarketInfos
+        .findOne({ _id: minerMarketInfoId })
+        .populate(MINER_MARKET_INFO_FIELDS_TO_POPULATE);
+
     if (!findMinerMarketInfo)
       throw new HttpException(409, "You're not minerMarketInfo");
 

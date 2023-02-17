@@ -6,7 +6,7 @@ import { Pool } from "@/interfaces/pool.interface";
 import { Miner } from "@/interfaces/miner.interface";
 import {
   isFanSpeedWithinBounds,
-  isHashrateWithinBounds,
+  isHashRateWithinBounds,
   isOutletTempWithinBounds,
 } from "./common-funcs";
 import { assertInventoryItem } from "@/interfaces/assertions/inventory-item";
@@ -17,6 +17,7 @@ import {
   POOL_SWITCHING_FAILURE_PREFIX,
   POOL_VERIFICATION_FAILURE_PREFIX,
 } from "./constants";
+import { getPoolWorker } from "./pool-workers";
 
 const NUMBERS_ONLY_REGEX = /\d+/g;
 
@@ -54,7 +55,6 @@ type ApplyPoolSwitchInfo = {
 };
 
 async function loginToMiner(ipAddress: string): Promise<SessionInfo> {
-  console.log("loginToMiner");
   return await axios({
     method: "get",
     url: `http://${ipAddress}/user/login?username=${GOLDSHELL_DEFAULTS.MINER_USERNAME}&password=${GOLDSHELL_DEFAULTS.MINER_PWD}`,
@@ -66,7 +66,6 @@ async function loginToMiner(ipAddress: string): Promise<SessionInfo> {
 async function getSettings(
   sessionInfo: SessionInfo
 ): Promise<PoolValidationInfo> {
-  console.log("getSettings");
   return await axios({
     method: "get",
     url: `http://${sessionInfo.ipAddress}/mcb/setting`,
@@ -82,7 +81,6 @@ async function getSettings(
 function verifyMinerIsForClient<T extends SwitchPoolParams | VerifyPoolParams>(
   params: T
 ): MinerValidator {
-  console.log("verifyMinerIsForClient");
   return (validationInfo: PoolValidationInfo) => {
     if (validationInfo.macAddress != params.miner.macAddress) {
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
@@ -94,7 +92,6 @@ function verifyMinerIsForClient<T extends SwitchPoolParams | VerifyPoolParams>(
 async function getPools(
   sessionInfo: SessionInfo
 ): Promise<ApplyPoolSwitchInfo> {
-  console.log("getPools");
   return await axios({
     method: "get",
     url: `http://${sessionInfo.ipAddress}/mcb/pools`,
@@ -110,7 +107,6 @@ async function getPools(
 async function deletePools(
   poolSwitchInfo: ApplyPoolSwitchInfo
 ): Promise<SessionInfo> {
-  console.log("deletePools");
   const sessionInfo = poolSwitchInfo.sessionInfo;
   if (poolSwitchInfo.pools.length <= 0) {
     return new Promise((resolve) => {
@@ -133,7 +129,6 @@ async function deletePools(
 
 function addPool(switchPoolParams: SwitchPoolParams) {
   return async (sessionInfo: SessionInfo): Promise<SessionInfo> => {
-    console.log("addPool");
     const data = buildNewPool(switchPoolParams);
     logger.info(`Data passed for Goldshell add req: \n${prettyFormat(data)}`);
     return await axios({
@@ -149,7 +144,6 @@ function addPool(switchPoolParams: SwitchPoolParams) {
 
 export async function rebootGoldshellMiner(params: SwitchPoolParams) {
   const sessionInfo = await loginToMiner(params.miner.ipAddress);
-  console.log("rebootMiner");
   return await axios({
     method: "get",
     url: `http://${sessionInfo.ipAddress}/mcb/restart`,
@@ -163,7 +157,7 @@ function buildNewPool(
   return {
     legal: true,
     url: constructPoolUrl(switchPoolParams.pool),
-    user: switchPoolParams.pool.username,
+    user: constructPoolUser(switchPoolParams),
     pass: GOLDSHELL_DEFAULTS.POOL_PWD,
     dragid: 0,
     active: false,
@@ -173,6 +167,10 @@ function buildNewPool(
 
 function constructPoolUrl(pool: Pool) {
   return `${pool.protocol}://${pool.domain}`;
+}
+
+function constructPoolUser(params: SwitchPoolParams | VerifyPoolParams) {
+  return `${params.pool.username}+pps.${getPoolWorker(params)}`;
 }
 
 export async function switchGoldshellPool(
@@ -200,7 +198,7 @@ export async function verifyGoldshellPool(
     .then(getSettings)
     .then(verifyMinerIsForClient(params))
     .then(verifyLivePoolStatus(params))
-    .then(() => verifyGoldshellHashrate(params.miner))
+    .then(() => verifyGoldshellHashRate(params.miner))
     .catch((e) => {
       const error = `${POOL_VERIFICATION_FAILURE_PREFIX} 
         Failed to verify the mining pool for an Goldshell: ${prettyFormat(
@@ -215,7 +213,6 @@ export async function verifyGoldshellPool(
 
 function verifyLivePoolStatus(verifyPoolParams: VerifyPoolParams) {
   return async (sessionInfo: SessionInfo) => {
-    console.log("verifyLivePoolStatus");
     return await axios({
       method: "get",
       url: `http://${sessionInfo.ipAddress}/mcb/pools`,
@@ -225,7 +222,7 @@ function verifyLivePoolStatus(verifyPoolParams: VerifyPoolParams) {
       if (
         !(
           currentPoolInfo.url == constructPoolUrl(verifyPoolParams.pool) &&
-          currentPoolInfo.user == verifyPoolParams.pool.username &&
+          currentPoolInfo.user == constructPoolUser(verifyPoolParams) &&
           currentPoolInfo.active &&
           currentPoolInfo["pool-priority"] == 0
         )
@@ -237,8 +234,7 @@ function verifyLivePoolStatus(verifyPoolParams: VerifyPoolParams) {
   };
 }
 
-export async function verifyGoldshellHashrate(miner: Miner) {
-  console.log("verifyGoldshellHashrate");
+export async function verifyGoldshellHashRate(miner: Miner) {
   const { ipAddress, authToken } = await loginToMiner(miner.ipAddress);
 
   return await axios({
@@ -247,15 +243,15 @@ export async function verifyGoldshellHashrate(miner: Miner) {
     headers: getRequestHeaders(authToken),
   }).then((res) => {
     const chipStats = res.data["data"];
-    const chipHashrates = chipStats.map((chipStat) => chipStat["hashrate"]);
-    const actualHashrate = chipHashrates.reduce(
+    const chipHashRates = chipStats.map((chipStat) => chipStat["hashRate"]);
+    const actualHashRate = chipHashRates.reduce(
       (partialSum, a) => partialSum + a,
       0
     );
     if (
-      !isHashrateWithinBounds({
+      !isHashRateWithinBounds({
         miner,
-        actualHashrate,
+        actualHashRate,
       })
     ) {
       const inventoryItem = miner.inventoryItem;
@@ -265,10 +261,10 @@ export async function verifyGoldshellHashrate(miner: Miner) {
         inventoryItem.operationalMetadata?.minerMetadata?.expectedHashRateRange;
 
       throw Error(`${MINER_HASHRATE_FAILURE_PREFIX} 
-      Hashrate not within the expected bounds: 
+      HashRate not within the expected bounds: 
         miner --> ${miner}
-        expectedHashrate --> ${expectedHashRateRange}
-        actualHashrate -> ${actualHashrate}.
+        expectedHashRate --> ${expectedHashRateRange}
+        actualHashRate -> ${actualHashRate}.
         Please check miner: ${prettyFormat(ipAddress)}`);
     }
   });

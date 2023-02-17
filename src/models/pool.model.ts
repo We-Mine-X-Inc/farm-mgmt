@@ -24,6 +24,10 @@ const poolSchema: Schema = new Schema({
     enum: PoolType,
     required: true,
   },
+  apiToken: {
+    type: String,
+    required: false,
+  },
   purpose: {
     type: Number,
     enum: PoolPurposeType,

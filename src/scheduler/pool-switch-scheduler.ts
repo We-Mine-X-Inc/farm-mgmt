@@ -89,33 +89,37 @@ class PoolSwitchScheduler {
         contract.hostingContract.contractDuration.endDateInMillis <= Date.now();
       const pool = await this.poolService.findPoolById(
         isContractCompleted
-          ? contract.hostingContract.finalCompanyPool
+          ? contract.hostingContract.finalCompanyPool._id
           : contract.hostingContract.poolMiningOptions[
               jobData.activePoolStateIndex
-            ].pool
+            ].pool._id
       );
 
       const poolSwitchFunction = POOL_SWITCH_FUNCTION[miner.API];
-      await poolSwitchFunction({ miner, pool }).then(async () => {
-        const attemptCount = 1;
-        const elapsedTimeBeforeVerifying = new Date(
-          Date.now() + this.getTimeToWaitBeforeVerifyPoolSwitch(attemptCount)
-        );
-        const updatedJobData = {
-          ...jobData,
-          attemptCount,
-          isContractCompleted,
-          previousJobId: job.attrs._id,
-          isCompanyPool:
-            pool.purpose == PoolPurposeType.MINING_FEE ||
-            pool.purpose == PoolPurposeType.PURE_COMPANY_REVENUE,
-        };
-        return this.scheduler.schedule(
-          elapsedTimeBeforeVerifying,
-          JOB_NAMES.VERIFY_POOL_SWITCH,
-          updatedJobData
-        );
-      });
+      await poolSwitchFunction({ miner, pool })
+        .catch((error) => {
+          logger.error(error);
+        })
+        .finally(async () => {
+          const attemptCount = 1;
+          const elapsedTimeBeforeVerifying = new Date(
+            Date.now() + this.getTimeToWaitBeforeVerifyPoolSwitch(attemptCount)
+          );
+          const updatedJobData = {
+            ...jobData,
+            attemptCount,
+            isContractCompleted,
+            previousJobId: job.attrs._id,
+            isCompanyPool:
+              pool.purpose == PoolPurposeType.MINING_FEE ||
+              pool.purpose == PoolPurposeType.PURE_COMPANY_REVENUE,
+          };
+          return this.scheduler.schedule(
+            elapsedTimeBeforeVerifying,
+            JOB_NAMES.VERIFY_POOL_SWITCH,
+            updatedJobData
+          );
+        });
     });
   }
 
@@ -128,7 +132,7 @@ class PoolSwitchScheduler {
       const miner = await this.minerService.findMinerById(jobData.minerId);
       const pool = await this.poolService.findPoolById(
         contract.hostingContract.poolMiningOptions[jobData.activePoolStateIndex]
-          .pool
+          .pool._id
       );
       const poolVerificationFunction = POOL_VERIFICATION_FUNCTION[miner.API];
       const rebootMinerFunction = REBOOT_MINER_FUNCTION[miner.API];
@@ -172,7 +176,7 @@ class PoolSwitchScheduler {
             previousJobId: job.attrs._id,
             failedSwitches: jobData.failedSwitches + 1,
           };
-          return rebootMinerFunction({ miner, pool }).then(() => {
+          return rebootMinerFunction({ miner, pool }).finally(() => {
             this.scheduler.schedule(
               elapsedTimeBeforeVerifying,
               JOB_NAMES.VERIFY_POOL_SWITCH,
@@ -211,9 +215,9 @@ class PoolSwitchScheduler {
       const pool = await this.poolService.findPoolById(
         contract.hostingContract.poolMiningOptions[
           info.options.activePoolStateIndex
-        ].pool
+        ].pool._id
       );
-      const miner = await this.minerService.findMinerById(contract.miner);
+      const miner = await this.minerService.findMinerById(contract.miner._id);
       const jobData: PoolSwitchJobData = {
         ...info.options,
         successfulSwitches: 0,

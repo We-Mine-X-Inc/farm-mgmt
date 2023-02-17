@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
+import { CoinType } from "./coin-market-info.interface";
 import { Customer } from "./customer.interface";
-import { Miner } from "./miner.interface";
 
 export enum PoolPurposeType {
   UNKNOWN = 0,
@@ -17,10 +17,14 @@ export enum PoolType {
 
 export interface Pool {
   _id: Types.ObjectId;
-  creator: Types.ObjectId | Customer;
+  creator: Customer;
   protocol: string;
   domain: string;
   username: string;
   poolType: PoolType;
+  coinType: CoinType;
+  apiToken: string;
   purpose: PoolPurposeType;
 }
+
+export const POOL_FIELDS_TO_POPULATE = ["creator"];

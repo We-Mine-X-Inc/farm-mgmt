@@ -1,6 +1,6 @@
 import { CreateMinerDto } from "@/dtos/miner.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { Miner } from "@/interfaces/miner.interface";
+import { Miner, MINER_FILEDS_TO_POPULATE } from "@/interfaces/miner.interface";
 import minerModel from "@/models/miner.model";
 import { isEmpty } from "@utils/util";
 import { Types } from "mongoose";
@@ -13,19 +13,32 @@ class MinerService {
   public miners = minerModel;
 
   public async findAllMiners(): Promise<Miner[]> {
-    const miners: Miner[] = await this.miners.find().lean();
+    const miners: Miner[] = await this.miners
+      .find()
+      .populate(MINER_FILEDS_TO_POPULATE);
     return miners;
   }
 
-  public async findMinerById(miner: Types.ObjectId | Miner): Promise<Miner> {
-    if (isEmpty(miner._id.id))
-      throw new HttpException(400, "You're not minerId");
+  public async findMinerByFriendlyId(friendlyMinerId: string): Promise<Miner> {
+    if (isEmpty(friendlyMinerId))
+      throw new HttpException(400, "You're not a friendlyMinerId");
 
     const findMiner: Miner = await this.miners
-      .findOne({ _id: miner })
-      // .populate("contract")
-      .populate("owner")
-      .populate("inventoryItem");
+      .findOne({ friendlyMinerId })
+      .populate(MINER_FILEDS_TO_POPULATE);
+
+    if (!findMiner) throw new HttpException(409, "You're not miner");
+
+    return findMiner;
+  }
+
+  public async findMinerById(minerId: Types.ObjectId): Promise<Miner> {
+    if (isEmpty(minerId.id)) throw new HttpException(400, "You're not minerId");
+
+    const findMiner: Miner = await this.miners
+      .findOne({ _id: minerId })
+      .populate(MINER_FILEDS_TO_POPULATE);
+
     if (!findMiner) throw new HttpException(409, "You're not miner");
 
     return findMiner;

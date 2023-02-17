@@ -6,11 +6,13 @@ LAUNCH_ENV=prod
 APP_NAME=pool-switching
 CONFIG_LOCATION=/home/$USER/applications/configs/.env.$LAUNCH_ENV.local
 INITIAL_PUSH_LOCATION=/home/$USER/applications/farm-mgmt
-DESTINATION_LOCATION=/home/$USER/applications/$APP_NAME/$LAUNCH_ENV
+DESTINATION_APP_LOCATION=/home/$USER/applications/$APP_NAME
+
+sudo -s
 
 # Move folder to environment specific folder.
-mkdir -p $DESTINATION_LOCATION
-mv $INITIAL_PUSH_LOCATION $DESTINATION_LOCATION
+mkdir -p $DESTINATION_APP_LOCATION
+mv $INITIAL_PUSH_LOCATION $DESTINATION_APP_LOCATION/$LAUNCH_ENV
 cd $DESTINATION_LOCATION
 
 # Copy environment specific config into directory.

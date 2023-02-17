@@ -3,7 +3,7 @@ import {
   rebootAntminerMiner,
   switchAntminerPool,
   verifyAntminerFanSpeed,
-  verifyAntminerHashrate,
+  verifyAntminerHashRate,
   verifyAntminerPool,
   verifyAntminerTemperature,
 } from "./antminer-operations";
@@ -12,7 +12,7 @@ import {
   rebootGoldshellMiner,
   switchGoldshellPool,
   verifyGoldshellFanSpeed,
-  verifyGoldshellHashrate,
+  verifyGoldshellHashRate,
   verifyGoldshellPool,
   verifyGoldshellTemperature,
 } from "./goldshell-operations";
@@ -49,9 +49,9 @@ export const HASHRATE_VERIFICATION_FUNCTION: Record<
   MinerApiType,
   (miner: Miner) => Promise<any>
 > = {
-  [MinerApiType.UNKNOWN]: verifyUnknownMinerHashrate,
-  [MinerApiType.ANTMINER]: verifyAntminerHashrate,
-  [MinerApiType.GOLDSHELL]: verifyGoldshellHashrate,
+  [MinerApiType.UNKNOWN]: verifyUnknownMinerHashRate,
+  [MinerApiType.ANTMINER]: verifyAntminerHashRate,
+  [MinerApiType.GOLDSHELL]: verifyGoldshellHashRate,
 };
 
 export const FAN_SPEED_VERIFICATION_FUNCTION: Record<
@@ -84,7 +84,7 @@ async function rebootUnknownMiner(params: SwitchPoolParams): Promise<any> {
   throw Error(`Invalid Miner API supplied. Params: ${prettyFormat(params)}`);
 }
 
-async function verifyUnknownMinerHashrate(miner: Miner): Promise<any> {
+async function verifyUnknownMinerHashRate(miner: Miner): Promise<any> {
   throw Error(`Invalid Miner API supplied. Params: ${prettyFormat(miner)}`);
 }
 

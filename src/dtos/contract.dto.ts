@@ -9,10 +9,10 @@ import { Types } from "mongoose";
 
 export class CreateContractDto {
   @IsObject()
-  public customer: Types.ObjectId | Customer;
+  public customer: Customer;
 
   @IsObject()
-  public miner: Types.ObjectId | Miner;
+  public miner: Miner;
 
   @IsBoolean()
   public isActive: Boolean;

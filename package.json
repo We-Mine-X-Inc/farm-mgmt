@@ -5,7 +5,7 @@
   "author": "We Mine X Inc.",
   "license": "ISC",
   "scripts": {
-    "start": "node dist/server.js",
+    "start": "npm run build:tsc && node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "prod": "cross-env NODE_ENV=production nodemon",
     "build": "swc src -d dist --source-maps --copy-files",

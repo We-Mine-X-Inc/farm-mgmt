@@ -34,9 +34,8 @@ class MinersController {
   ) => {
     try {
       const minerId: string = req.params.id;
-      const findOneMinerData: Miner = await this.minerService.findMinerById(
-        new Types.ObjectId(minerId)
-      );
+      const findOneMinerData: Miner =
+        await this.minerService.findMinerByFriendlyId(minerId);
 
       res.send(`<pre>${prettyFormat(findOneMinerData)}</pre>`);
     } catch (error) {

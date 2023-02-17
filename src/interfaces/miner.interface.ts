@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { Contract } from "./contract.interface";
 import { Customer } from "./customer.interface";
 import { InventoryItem } from "./inventory-item.interface";
 
@@ -28,11 +29,20 @@ export enum MinerApiType {
 
 export interface Miner {
   _id: Types.ObjectId;
-  owner: Types.ObjectId | Customer;
-  inventoryItem: Types.ObjectId | InventoryItem;
+  friendlyMinerId: string;
+  owner: Customer;
+  inventoryItem: InventoryItem;
   ipAddress: string;
   macAddress: string;
   API: MinerApiType;
   status: MinerStatus;
   rackLocation: RackLocation;
+  activeContract: Contract;
 }
+
+// TODO: Move these to the models as opposed to the interfaces
+export const MINER_FILEDS_TO_POPULATE = [
+  { path: "owner" },
+  { path: "inventoryItem", populate: { path: "operationalDependencies" } },
+  // { path: "activeContract" },
+];

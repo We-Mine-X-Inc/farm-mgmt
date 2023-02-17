@@ -1,7 +1,7 @@
 import { model, Schema, Document } from "mongoose";
 import { MgmtAccount } from "@/interfaces/mgmt-account.interface";
 
-const contractModePermissionsSchema: Schema = new Schema({
+const contractModePermissionsSchema = {
   canRead: {
     type: Boolean,
     required: true,
@@ -10,9 +10,9 @@ const contractModePermissionsSchema: Schema = new Schema({
     type: Boolean,
     required: true,
   },
-});
+};
 
-const customerModelPermissionsSchema: Schema = new Schema({
+const customerModelPermissionsSchema = {
   canRead: {
     type: Boolean,
     required: true,
@@ -21,9 +21,9 @@ const customerModelPermissionsSchema: Schema = new Schema({
     type: Boolean,
     required: true,
   },
-});
+};
 
-const minerModelPermissionsSchema: Schema = new Schema({
+const minerModelPermissionsSchema = {
   canRead: {
     type: Boolean,
     required: true,
@@ -32,9 +32,9 @@ const minerModelPermissionsSchema: Schema = new Schema({
     type: Boolean,
     required: true,
   },
-});
+};
 
-const poolModelPermissionsSchema: Schema = new Schema({
+const poolModelPermissionsSchema = {
   canRead: {
     type: Boolean,
     required: true,
@@ -43,9 +43,9 @@ const poolModelPermissionsSchema: Schema = new Schema({
     type: Boolean,
     required: true,
   },
-});
+};
 
-const supplierQuoteModelPermissionsSchema: Schema = new Schema({
+const supplierQuoteModelPermissionsSchema = {
   canRead: {
     type: Boolean,
     required: true,
@@ -54,15 +54,15 @@ const supplierQuoteModelPermissionsSchema: Schema = new Schema({
     type: Boolean,
     required: true,
   },
-});
+};
 
-const mgmtPermissionsSchema: Schema = new Schema({
+const mgmtPermissionsSchema = {
   contractModelPermissions: contractModePermissionsSchema,
   customerModelPermissions: customerModelPermissionsSchema,
   minerModelPermissions: minerModelPermissionsSchema,
   poolModelPermissions: poolModelPermissionsSchema,
   supplierQuoteModelPermissions: supplierQuoteModelPermissionsSchema,
-});
+};
 
 const mgmtAccountSchema: Schema = new Schema({
   email: {

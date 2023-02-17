@@ -1,9 +1,12 @@
 import { CreateContractDto } from "@/dtos/contract.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { Contract } from "@/interfaces/contract.interface";
+import {
+  Contract,
+  CONTRACT_FIELDS_TO_POPULATE,
+} from "@/interfaces/contract.interface";
 import contractModel from "@/models/contract.model";
 import { isEmpty } from "@utils/util";
-import { Types } from "mongoose";
+import { Query, Types } from "mongoose";
 import { format as prettyFormat } from "pretty-format";
 
 export type GetContractRequest = {
@@ -17,7 +20,9 @@ class ContractService {
   public contracts = contractModel;
 
   public async findAllContracts(): Promise<Contract[]> {
-    const contracts: Contract[] = await this.contracts.find().lean();
+    const contracts: Contract[] = await this.contracts
+      .find()
+      .populate(CONTRACT_FIELDS_TO_POPULATE);
     return contracts;
   }
 
@@ -25,28 +30,26 @@ class ContractService {
     if (isEmpty(contractId._id.id))
       throw new HttpException(400, "You're not contractId");
 
-    const findContract: Contract = await this.contracts.findOne({
-      _id: contractId,
-    });
+    const findContract: Contract = await this.contracts
+      .findOne({ _id: contractId })
+      .populate(CONTRACT_FIELDS_TO_POPULATE);
+
     if (!findContract) throw new HttpException(409, "You're not contract");
 
     return findContract;
   }
 
-  // Redesign this to be more robust and expressive of situations when a miner is under
-  // the company's control as opposed to under customer contract. This will require changes
-  // in the interface of Miner. We can probably move the finalPool information to the miner
-  // itself as opposed to within the Contract. This will act as the default pool when the miner
-  // is not under customer contract.
   public async findContractByMiner(
     request: GetContractRequest
   ): Promise<Contract> {
     if (!request) throw new HttpException(400, "You're not GetContractRequest");
 
-    const findContract: Contract = await this.contracts.findOne({
-      miner: request.minerId,
-    });
-    if (!findContract) throw new HttpException(409, "You're not contract");
+    const findContract: Contract = await this.contracts
+      .findOne({ miner: new Types.ObjectId(request.minerId) })
+      .populate(CONTRACT_FIELDS_TO_POPULATE);
+
+    if (!findContract)
+      throw new HttpException(409, `You're not contract: ${findContract}`);
 
     return findContract;
   }
@@ -59,7 +62,7 @@ class ContractService {
 
     const findContract: Contract = await this.contracts.findOne({
       miner: contractData.miner,
-      isActive: true,
+      isActive: true /** TODO: Add this field to Contract */,
     });
     if (findContract)
       throw new HttpException(

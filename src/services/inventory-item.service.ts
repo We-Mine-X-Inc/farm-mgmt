@@ -1,6 +1,9 @@
 import { CreateInventoryItemDto } from "@/dtos/inventory-item.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { InventoryItem } from "@/interfaces/inventory-item.interface";
+import {
+  InventoryItem,
+  INVENTORY_ITEM_FIELDS_TO_POPULATE,
+} from "@/interfaces/inventory-item.interface";
 import inventoryItemModel from "@/models/inventory-item.model";
 import { isEmpty } from "@utils/util";
 import { Types } from "mongoose";
@@ -14,7 +17,7 @@ class InventoryItemService {
   public async findAllInventoryItems(): Promise<InventoryItem[]> {
     const inventoryItems: InventoryItem[] = await this.inventoryItems
       .find()
-      .lean();
+      .populate(INVENTORY_ITEM_FIELDS_TO_POPULATE);
     return inventoryItems;
   }
 
@@ -24,9 +27,10 @@ class InventoryItemService {
     if (isEmpty(inventoryItemId))
       throw new HttpException(400, "You're not inventoryItemId");
 
-    const findInventoryItem: InventoryItem = await this.inventoryItems.findOne({
-      _id: inventoryItemId,
-    });
+    const findInventoryItem: InventoryItem = await this.inventoryItems
+      .findOne({ _id: inventoryItemId })
+      .populate(INVENTORY_ITEM_FIELDS_TO_POPULATE);
+
     if (!findInventoryItem)
       throw new HttpException(409, "You're not inventoryItem");
 

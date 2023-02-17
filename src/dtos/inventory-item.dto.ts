@@ -3,7 +3,13 @@ import {
   InventoryItemType,
   OperationalMetadata,
 } from "@/interfaces/inventory-item.interface";
-import { IsArray, IsEnum, IsObject, IsString } from "class-validator";
+import {
+  IsArray,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+} from "class-validator";
 import { Types } from "mongoose";
 
 export class CreateInventoryItemDto {
@@ -16,9 +22,11 @@ export class CreateInventoryItemDto {
   @IsString()
   public model: string;
 
+  @IsOptional()
   @IsArray()
-  public operationalDependencies: [Types.ObjectId];
+  public operationalDependencies?: Types.ObjectId[];
 
+  @IsOptional()
   @IsObject()
-  public operationalMetadata: OperationalMetadata;
+  public operationalMetadata?: OperationalMetadata;
 }

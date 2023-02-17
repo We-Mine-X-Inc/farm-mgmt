@@ -21,3 +21,5 @@ export interface SupplierQuote {
   sourceDateInMillis: number;
   expirationDateInMillis: number;
 }
+
+export const SUPPLIER_QUOTE_FIELDS_TO_POPULATE = [{ path: "supplier" }];

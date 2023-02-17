@@ -6,7 +6,7 @@ import { Pool } from "@/interfaces/pool.interface";
 import { Miner } from "@/interfaces/miner.interface";
 import {
   isFanSpeedWithinBounds,
-  isHashrateWithinBounds,
+  isHashRateWithinBounds,
   isInletTempWithinBounds,
   isOutletTempWithinBounds,
 } from "./common-funcs";
@@ -17,6 +17,7 @@ import {
   POOL_SWITCHING_FAILURE_PREFIX,
   POOL_VERIFICATION_FAILURE_PREFIX,
 } from "./constants";
+import { getPoolWorker } from "./pool-workers";
 
 const ANTMINER_DEFAULTS = {
   MINER_USERNAME: "root",
@@ -132,7 +133,7 @@ function verifyLivePoolStatus(
       if (
         !(
           currentPoolInfo.url == constructPoolUrl(verifyPoolParams.pool) &&
-          currentPoolInfo.user == verifyPoolParams.pool.username &&
+          currentPoolInfo.user == constructPoolUser(verifyPoolParams) &&
           currentPoolInfo.status == "Alive" &&
           currentPoolInfo.priority == 0
         )
@@ -160,7 +161,7 @@ function buildNewMinerConfig(
   newPoolConfig.pools = [
     {
       url: constructPoolUrl(switchPoolInfo.pool),
-      user: switchPoolInfo.pool.username,
+      user: constructPoolUser(switchPoolInfo),
       pass: "",
     },
     EMPTY_POOL_CONFIG,
@@ -171,6 +172,10 @@ function buildNewMinerConfig(
 
 function constructPoolUrl(pool: Pool) {
   return `${pool.protocol}://${pool.domain}`;
+}
+
+function constructPoolUser(params: SwitchPoolParams | VerifyPoolParams) {
+  return `${params.pool.username}.${getPoolWorker(params)}`;
 }
 
 export async function switchAntminerPool(
@@ -196,7 +201,7 @@ export async function verifyAntminerPool(
     .then(verifyMinerIsForClient(params))
     .then(getMinerConfig(params))
     .then(verifyLivePoolStatus(params))
-    .then(() => verifyAntminerHashrate(params.miner))
+    .then(() => verifyAntminerHashRate(params.miner))
     .catch((e) => {
       const error = `${POOL_VERIFICATION_FAILURE_PREFIX} 
         Failed to verify the mining pool for an Antminer: ${prettyFormat(
@@ -209,7 +214,7 @@ export async function verifyAntminerPool(
     });
 }
 
-export async function verifyAntminerHashrate(miner: Miner) {
+export async function verifyAntminerHashRate(miner: Miner) {
   return await ANTMINER_DIGESTAUTH.request({
     headers: { Accept: "application/json" },
     method: "GET",
@@ -218,26 +223,26 @@ export async function verifyAntminerHashrate(miner: Miner) {
     const minerStats = res.data["STATS"][0];
     if (
       !(
-        isHashrateWithinBounds({
+        isHashRateWithinBounds({
           miner,
-          actualHashrate: minerStats["rate_5s"],
+          actualHashRate: minerStats["rate_5s"],
         }) &&
-        isHashrateWithinBounds({
+        isHashRateWithinBounds({
           miner,
-          actualHashrate: minerStats["rate_30m"],
+          actualHashRate: minerStats["rate_30m"],
         }) &&
-        isHashrateWithinBounds({
+        isHashRateWithinBounds({
           miner,
-          actualHashrate: minerStats["rate_avg"],
+          actualHashRate: minerStats["rate_avg"],
         })
       )
     ) {
       throw Error(`${MINER_HASHRATE_FAILURE_PREFIX}
-      Hashrate not within the expected bounds: 
-        expectedHashrate within miner - ${miner}
-        rate_5s actualHashrate - ${minerStats["rate_5s"]}
-        rate_30m actualHashrate - ${minerStats["rate_30m"]}
-        rate_avg actualHashrate - ${minerStats["rate_avg"]}.
+      HashRate not within the expected bounds: 
+        expectedHashRate within miner - ${miner}
+        rate_5s actualHashRate - ${minerStats["rate_5s"]}
+        rate_30m actualHashRate - ${minerStats["rate_30m"]}
+        rate_avg actualHashRate - ${minerStats["rate_avg"]}.
         Please check miner: ${prettyFormat(miner.ipAddress)}`);
     }
   });

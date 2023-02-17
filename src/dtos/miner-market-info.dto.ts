@@ -8,7 +8,7 @@ export class CreateMinerMarketInfoDto {
   public coinType: CoinType;
 
   @IsObject()
-  public minerInventoryItem: Types.ObjectId | InventoryItem;
+  public minerInventoryItem: InventoryItem;
 
   @IsNumber()
   public dailyCoinEarning: number;

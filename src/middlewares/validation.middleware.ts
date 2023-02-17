@@ -11,8 +11,6 @@ const validationMiddleware = (
   forbidNonWhitelisted = true
 ): RequestHandler => {
   return (req, res, next) => {
-    console.log("validation");
-    console.log(req[value]);
     validate(plainToClass(type, req[value]), {
       skipMissingProperties,
       whitelist,

@@ -5,7 +5,7 @@ import { Types } from "mongoose";
 
 export class CreatePoolDto {
   @IsObject()
-  public creator: Types.ObjectId | Customer;
+  public creator: Customer;
 
   @IsString()
   public protocol: string;

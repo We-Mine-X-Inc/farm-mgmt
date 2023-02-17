@@ -6,7 +6,7 @@ import {
   InventoryItemType,
 } from "@/interfaces/inventory-item.interface";
 
-const hashRateRangeSchema: Schema = new Schema({
+const hashRateRangeSchema = {
   minimum: {
     type: Number,
     required: true,
@@ -15,20 +15,28 @@ const hashRateRangeSchema: Schema = new Schema({
     type: Number,
     required: true,
   },
-});
+};
 
-const minerMetadataSchema: Schema = new Schema({
+const minerMetadataSchema = {
   hashAlgorithmType: {
     type: Number,
     enum: HashAlgorithmType,
     required: true,
   },
   expectedHashRateRange: hashRateRangeSchema,
-});
+};
 
-const operationalMetadataSchema: Schema = new Schema({
+const powerSwitchMetadataSchema = {
+  clientDeviceName: {
+    type: String,
+    required: true,
+  },
+};
+
+const operationalMetadataSchema = {
   minerMetadata: minerMetadataSchema,
-});
+  powerSwitchMetadata: powerSwitchMetadataSchema,
+};
 
 const inventoryItemSchema: Schema = new Schema({
   operationalDependencies: {
@@ -36,12 +44,12 @@ const inventoryItemSchema: Schema = new Schema({
     ref: "InventoryItem",
     required: false,
   },
-  inventoryItemType: {
+  type: {
     type: Number,
     enum: InventoryItemType,
     required: true,
   },
-  inventoryItemStatus: {
+  status: {
     type: Number,
     enum: InventoryItemStatus,
     required: true,

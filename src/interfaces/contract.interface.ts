@@ -47,7 +47,7 @@ export enum ContractStage {
 export type HostingContract = {
   hostingStage: MinerHostingConfigurationStage;
   contractDuration: ContractDuration;
-  finalCompanyPool: Types.ObjectId | Pool;
+  finalCompanyPool: Pool;
   poolMiningOptions: Types.Array<PoolMiningOption>;
 };
 
@@ -61,7 +61,7 @@ export type ContractDuration = {
 };
 
 export type PoolMiningOption = {
-  pool: Types.ObjectId | Pool;
+  pool: Pool;
   miningDurationInMillis: number;
 };
 
@@ -72,11 +72,22 @@ export type MarketInfo = {
 
 export interface Contract {
   _id: Types.ObjectId;
-  customer: Types.ObjectId | Customer;
-  miner: Types.ObjectId | Miner;
+  previousContract: Contract;
+  customer: Customer;
+  miner: Miner;
   contractStage: ContractStage;
   minerIntakeStage: MinerIntakeStage;
   hostingContract?: HostingContract;
   resaleContract?: ResaleContract;
   marketInfoAtRatification: MarketInfo;
 }
+
+export const CONTRACT_FIELDS_TO_POPULATE = [
+  { path: "customer" },
+  { path: "miner" },
+  { path: "hostingContract.finalCompanyPool" },
+  {
+    path: "hostingContract.poolMiningOptions",
+    populate: { path: "pool" },
+  },
+];

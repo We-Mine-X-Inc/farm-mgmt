@@ -72,8 +72,6 @@ class FacilityInfosController {
     next: NextFunction
   ) => {
     try {
-      console.log("updating object with data");
-      console.log(req.body);
       const facilityInfoId: string = req.params.id;
       const facilityInfoData: CreateFacilityInfoDto = req.body;
       const updateFacilityInfoData: FacilityInfo =

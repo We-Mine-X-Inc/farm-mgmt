@@ -5,7 +5,7 @@ import {
   MinerApiType,
 } from "@/interfaces/miner.interface";
 
-const minerStatusSchema: Schema = new Schema({
+const minerStatusSchema = {
   lastOnlineDate: {
     type: Date,
     required: true,
@@ -21,9 +21,9 @@ const minerStatusSchema: Schema = new Schema({
     required: true,
     default: false,
   },
-});
+};
 
-const rackLocationSchema: Schema = new Schema({
+const rackLocationSchema = {
   facility: {
     type: String,
     required: false,
@@ -36,7 +36,7 @@ const rackLocationSchema: Schema = new Schema({
     type: String,
     required: false,
   },
-});
+};
 
 const minerSchema: Schema = new Schema({
   owner: {
@@ -47,6 +47,10 @@ const minerSchema: Schema = new Schema({
   inventoryItem: {
     type: Schema.Types.ObjectId,
     ref: "InventoryItem",
+    required: true,
+  },
+  friendlyMinerId: {
+    type: String,
     required: true,
   },
   ipAddress: {

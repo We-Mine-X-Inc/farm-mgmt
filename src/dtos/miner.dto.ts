@@ -10,10 +10,10 @@ import { Types } from "mongoose";
 
 export class CreateMinerDto {
   @IsObject()
-  public owner: Types.ObjectId | Customer;
+  public owner: Customer;
 
   @IsObject()
-  public inventoryItem: Types.ObjectId | InventoryItem;
+  public inventoryItem: InventoryItem;
 
   @IsMACAddress()
   public macAddress: string;

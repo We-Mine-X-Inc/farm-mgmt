@@ -7,6 +7,7 @@ export enum InventoryItemType {
   POWER_CABLE = 3,
   WIFI_ROUTER = 4,
   MINER_FAN = 5,
+  POWER_SWITCH = 6,
 }
 
 export enum InventoryItemStatus {
@@ -29,6 +30,11 @@ export type NumericRange = {
   maximum: number;
 };
 
+export type OperationalMetadata = {
+  minerMetadata?: MinerOperationsMetadata;
+  powerSwitchMetadata?: PowerSwitchMetadata;
+};
+
 export type MinerOperationsMetadata = {
   hashAlgorithmType: HashAlgorithmType;
   expectedHashRateRange: NumericRange;
@@ -37,8 +43,8 @@ export type MinerOperationsMetadata = {
   expectedOutletTempRange: NumericRange;
 };
 
-export type OperationalMetadata = {
-  minerMetadata?: MinerOperationsMetadata;
+export type PowerSwitchMetadata = {
+  clientDeviceName: string;
 };
 
 export interface InventoryItem {
@@ -46,6 +52,13 @@ export interface InventoryItem {
   type: InventoryItemType;
   status: InventoryItemStatus;
   model: string;
-  operationalDependencies: [Types.ObjectId | InventoryItem];
+  operationalDependencies: [InventoryItem];
   operationalMetadata: OperationalMetadata;
 }
+
+export const INVENTORY_ITEM_FIELDS_TO_POPULATE = [
+  {
+    path: "operationalDependencies",
+    populate: { path: "operationalDependencies" },
+  },
+];

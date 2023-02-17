@@ -4,7 +4,7 @@ import { Types } from "mongoose";
 
 export class CreateSupplierQuoteDto {
   @IsObject()
-  public supplier: Types.ObjectId | SupplierQuote;
+  public supplier: SupplierQuote;
 
   @IsString()
   public itemModel: string;

@@ -8,7 +8,6 @@ import { format as prettyFormat } from "pretty-format";
  * @description this value is Empty Check
  */
 export const isEmpty = (value: string | number | object): boolean => {
-  console.log(`typeof: ${typeof value}`);
   if (value === null) {
     return true;
   } else if (typeof value !== "number" && value === "") {

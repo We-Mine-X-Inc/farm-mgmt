@@ -5,6 +5,7 @@ node_modules
 
 data
 dist
+local-dev-scripts
 
 src/logs
 src/.DS_Store

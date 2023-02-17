@@ -5,6 +5,13 @@ import { InventoryItem } from "./inventory-item.interface";
 export type MinerMarketInfo = {
   _id: Types.ObjectId;
   coinType: CoinType;
-  minerInventoryItem: Types.ObjectId | InventoryItem;
+  minerInventoryItem: InventoryItem;
   dailyCoinEarning: number;
 };
+
+export const MINER_MARKET_INFO_FIELDS_TO_POPULATE = [
+  {
+    path: "minerInventoryItem",
+    populate: { path: "operationalDependencies" },
+  },
+];

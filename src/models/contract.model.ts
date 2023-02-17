@@ -8,7 +8,7 @@ import {
 } from "@/interfaces/contract.interface";
 import { model, Schema, Document, Types } from "mongoose";
 
-const contractDurationSchema: Schema = new Schema({
+const contractDurationSchema = {
   startDateInMillis: {
     type: Number,
     required: true,
@@ -17,9 +17,9 @@ const contractDurationSchema: Schema = new Schema({
     type: Number,
     required: true,
   },
-});
+};
 
-const poolMiningOptionsSchema: Schema = new Schema({
+const poolMiningOptionsSchema = {
   pool: {
     type: Schema.Types.ObjectId,
     ref: "Pool",
@@ -29,9 +29,9 @@ const poolMiningOptionsSchema: Schema = new Schema({
     type: Number,
     required: true,
   },
-});
+};
 
-const hostingContractSchema: Schema = new Schema({
+const hostingContractSchema = {
   hostingStage: {
     type: Number,
     enum: MinerHostingConfigurationStage,
@@ -44,17 +44,17 @@ const hostingContractSchema: Schema = new Schema({
     required: true,
   },
   poolMiningOptions: [poolMiningOptionsSchema],
-});
+};
 
-const resaleContractSchema: Schema = new Schema({
+const resaleContractSchema = {
   resaleStage: {
     type: Number,
     enum: MinerResaleStage,
     required: true,
   },
-});
+};
 
-const coinMarketInfoSchema: Schema = new Schema({
+const coinMarketInfoSchema = {
   coinType: {
     type: Number,
     enum: CoinType,
@@ -68,9 +68,9 @@ const coinMarketInfoSchema: Schema = new Schema({
     type: Number,
     required: true,
   },
-});
+};
 
-const minerMarketInfoSchema: Schema = new Schema({
+const minerMarketInfoSchema = {
   coinType: {
     type: Number,
     enum: CoinType,
@@ -80,14 +80,19 @@ const minerMarketInfoSchema: Schema = new Schema({
     type: Number,
     required: true,
   },
-});
+};
 
-const marketInfoAtRatificationSchema: Schema = new Schema({
+const marketInfoAtRatificationSchema = {
   coinMarketInfo: coinMarketInfoSchema,
   minerMarketInfo: minerMarketInfoSchema,
-});
+};
 
 const contractSchema: Schema = new Schema({
+  previousContract: {
+    type: Schema.Types.ObjectId,
+    ref: "Contract",
+    required: false,
+  },
   customer: {
     type: Schema.Types.ObjectId,
     ref: "Customer",

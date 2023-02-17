@@ -10,7 +10,7 @@ export const agendaSchedulerManager = {
   },
   closeAll: async () => {
     for (const scheduler of schedulers) {
-      console.log(await scheduler.stop());
+      await scheduler.stop();
     }
   },
 };

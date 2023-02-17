@@ -1,9 +1,9 @@
 import { assertInventoryItem } from "@/interfaces/assertions/inventory-item";
 import { Miner } from "@/interfaces/miner.interface";
 
-export function isHashrateWithinBounds(params: {
+export function isHashRateWithinBounds(params: {
   miner: Miner;
-  actualHashrate: number;
+  actualHashRate: number;
 }) {
   const inventoryItem = params.miner.inventoryItem;
   assertInventoryItem(inventoryItem);
@@ -11,8 +11,8 @@ export function isHashrateWithinBounds(params: {
   const expectedHashRateRange =
     inventoryItem.operationalMetadata?.minerMetadata?.expectedHashRateRange;
   return (
-    expectedHashRateRange.minimum <= params.actualHashrate &&
-    params.actualHashrate <= expectedHashRateRange.maximum
+    expectedHashRateRange.minimum <= params.actualHashRate &&
+    params.actualHashRate <= expectedHashRateRange.maximum
   );
 }
 

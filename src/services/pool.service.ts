@@ -1,14 +1,9 @@
 import { CreatePoolDto } from "@/dtos/pool.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { Pool, PoolPurposeType } from "@/interfaces/pool.interface";
+import { POOL_FIELDS_TO_POPULATE, Pool } from "@/interfaces/pool.interface";
 import poolModel from "@/models/pool.model";
 import { isEmpty } from "@utils/util";
 import { Types } from "mongoose";
-
-type RobustFindParams = {
-  minerId: string;
-  purpose: PoolPurposeType;
-};
 
 /**
  * Serves data from the DB based on the fetched/mutated information.
@@ -17,25 +12,18 @@ class PoolService {
   public pools = poolModel;
 
   public async findAllPools(): Promise<Pool[]> {
-    const pools: Pool[] = await this.pools.find().lean();
+    const pools: Pool[] = await this.pools
+      .find()
+      .populate(POOL_FIELDS_TO_POPULATE);
     return pools;
   }
 
-  public async findPoolById(poolId: Types.ObjectId | Pool): Promise<Pool> {
+  public async findPoolById(poolId: Types.ObjectId): Promise<Pool> {
     if (isEmpty(poolId)) throw new HttpException(400, "You're not poolId");
 
-    console.log(`poolId: ${poolId}`);
-    const findPool = await this.pools.findOne({ _id: poolId });
-    console.log(`findPool: ${findPool}`);
-    if (!findPool) throw new HttpException(409, "You're not pool");
-
-    return findPool;
-  }
-
-  public async findPool(params: RobustFindParams): Promise<Pool> {
-    if (isEmpty(params)) throw new HttpException(400, "You're not pool info");
-
-    const findPool: Pool = await this.pools.findOne(params);
+    const findPool = await this.pools
+      .findOne({ _id: poolId })
+      .populate(POOL_FIELDS_TO_POPULATE);
     if (!findPool) throw new HttpException(409, "You're not pool");
 
     return findPool;
