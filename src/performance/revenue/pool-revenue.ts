@@ -11,8 +11,6 @@ export async function fetchRevenueData(pool: Pool) {
     method: "get",
     url: endpoint,
   }).then((res) => {
-    console.log("fetchRevenueData");
-    console.log(res.data);
     return convertPoolRevenueData({ pool, data: res.data });
   });
 }

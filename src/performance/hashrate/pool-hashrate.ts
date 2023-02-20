@@ -5,14 +5,12 @@ import { convertPoolMarsWorkerHashRates } from "./pool-mars-hashrate";
 import { convertSlushPoolWorkerHashRates } from "./slush-pool-hashrate";
 
 export async function fetchWorkerHashRateContributionsData(pool: Pool) {
-  const endpoint = await constructWorkerHashRateEndpoint(pool);
+  const endpoint = constructWorkerHashRateEndpoint(pool);
   return await axios({
     headers: getApiHeaders(pool),
     method: "get",
     url: endpoint,
   }).then((res) => {
-    console.log("fetchWorkerHashRateContributionsData");
-    console.log(res.data);
     return convertPoolHashRateData({ pool, data: res.data });
   });
 }

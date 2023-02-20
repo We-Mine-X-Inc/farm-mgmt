@@ -1,25 +1,29 @@
 import {
   PoolWorkerHashRateContribution,
-  WorkerContribution,
+  WorkerMap,
 } from "@/interfaces/pool-worker-hash-rate-contribution.interface";
 import { TimeRange } from "@/interfaces/performance/time.interface";
-import { IsArray, IsObject } from "class-validator";
+import { IsArray, IsObject, IsString } from "class-validator";
 import { Types } from "mongoose";
+import { HashRate } from "@/interfaces/performance/hash-rate.interface";
 
 export class AddPoolWorkerHashRateContributionDto {
-  @IsObject()
-  public poolId: Types.ObjectId;
+  @IsString()
+  public poolUsername: string;
 
   @IsObject()
   public timeRange: TimeRange;
 
   @IsObject()
-  public workerContributions: WorkerContribution;
+  public clientWorkers: WorkerMap;
+
+  @IsObject()
+  public companyWorkers: WorkerMap;
 }
 
 export class ListPoolWorkerHashRateContributionRequestDto {
-  @IsObject()
-  public poolId: Types.ObjectId;
+  @IsString()
+  public poolUsername: Types.ObjectId;
 
   @IsObject()
   public timeRange: TimeRange;

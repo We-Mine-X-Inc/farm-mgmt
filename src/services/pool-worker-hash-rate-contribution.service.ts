@@ -4,10 +4,7 @@ import {
   ListPoolWorkerHashRateContributionResponseDto,
 } from "@/dtos/pool-worker-hash-rate-contribution.dto";
 import { HttpException } from "@/exceptions/HttpException";
-import {
-  PoolWorkerHashRateContribution,
-  POOL_WORKER_HASH_RATE_CONTRIBUTION_FIELDS_TO_POPULATE,
-} from "@/interfaces/pool-worker-hash-rate-contribution.interface";
+import { PoolWorkerHashRateContribution } from "@/interfaces/pool-worker-hash-rate-contribution.interface";
 import poolWorkerHashRateContributionModel from "@/models/pool-worker-hash-rate-contribution.model";
 import { logger } from "@/utils/logger";
 import { isEmpty } from "@/utils/util";
@@ -26,11 +23,25 @@ class PoolWorkerHashRateContributionService {
         "You're not a AddPoolWorkerHashRateContributionDto"
       );
 
-    return await this.poolWorkerHashRateContributionModel.create({
-      pool: hashRateContribution.poolId,
-      timeRange: hashRateContribution.timeRange,
-      workerContributions: hashRateContribution.workerContributions,
-    });
+    const existingContributionRecord =
+      await this.poolWorkerHashRateContributionModel.find({
+        poolUsername: hashRateContribution.poolUsername,
+        timeRange: hashRateContribution.timeRange,
+      });
+    if (existingContributionRecord.length > 0) {
+      throw new HttpException(400, "TimeRange for this pool already exists.");
+    }
+
+    return await this.poolWorkerHashRateContributionModel
+      .create({
+        poolUsername: hashRateContribution.poolUsername,
+        timeRange: hashRateContribution.timeRange,
+        clientWorkers: JSON.stringify(hashRateContribution.clientWorkers),
+        companyWorkers: JSON.stringify(hashRateContribution.companyWorkers),
+      })
+      .then((newContribution) =>
+        this.convertPoolWorkerHashRateContribution(newContribution)
+      );
   }
 
   public async getWorkerHashRateContributions(
@@ -43,17 +54,24 @@ class PoolWorkerHashRateContributionService {
       );
 
     const poolWorkerContributions: PoolWorkerHashRateContribution[] =
-      await this.poolWorkerHashRateContributionModel
-        .find({
-          pool: request.poolId,
-          "timeRange.startInMillis": {
-            $lte: request.timeRange.endInMillis,
-          },
-          "timeRange.endInMillis": { $gte: request.timeRange.startInMillis },
-        })
-        .populate(POOL_WORKER_HASH_RATE_CONTRIBUTION_FIELDS_TO_POPULATE);
-
+      await this.poolWorkerHashRateContributionModel.find({
+        poolUsername: request.poolUsername,
+        "timeRange.startInMillis": {
+          $lte: request.timeRange.endInMillis,
+        },
+        "timeRange.endInMillis": { $gte: request.timeRange.startInMillis },
+      });
     return { poolWorkerContributions };
+  }
+
+  private convertPoolWorkerHashRateContribution(
+    newContributionModel
+  ): PoolWorkerHashRateContribution {
+    return {
+      ...newContributionModel,
+      clientWorkers: JSON.parse(newContributionModel.clientWorkers),
+      companyWorkers: JSON.parse(newContributionModel.companyWorkers),
+    };
   }
 }
 

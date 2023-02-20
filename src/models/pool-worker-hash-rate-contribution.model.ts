@@ -4,23 +4,22 @@ import { HashRateSchema } from "./performance/hash-rate.model";
 import { TimeRangeSchema } from "./performance/time.model";
 
 const poolWorkerHashRateContributionSchema: Schema = new Schema({
-  pool: {
-    type: Schema.Types.ObjectId,
-    ref: "Pool",
+  poolUsername: {
+    type: String,
     required: true,
   },
   timeRange: {
     ...TimeRangeSchema,
   },
-  workerContributions: {
-    clientWorkers: {
-      type: Schema.Types.Map,
-      of: HashRateSchema,
-    },
-    companyWorkers: {
-      type: Schema.Types.Map,
-      of: HashRateSchema,
-    },
+  clientWorkers: {
+    type: String,
+    required: true,
+    default: JSON.stringify({}),
+  },
+  companyWorkers: {
+    type: String,
+    required: true,
+    default: JSON.stringify({}),
   },
 });
 

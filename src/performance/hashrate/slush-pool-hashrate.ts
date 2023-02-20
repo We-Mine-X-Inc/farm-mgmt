@@ -23,18 +23,14 @@ export function convertSlushPoolWorkerHashRates(data): WorkerContribution {
 
   return Object.keys(workersInfo).reduce((workerContributions, workerName) => {
     if (workerName.includes(CLIENT_WORKER_PREFIX)) {
-      workerContributions.clientWorkers.set(
-        workerName,
-        convertSlushPoolWorkerContribution(workersInfo[workerName])
-      );
+      workerContributions.clientWorkers[workerName] =
+        convertSlushPoolWorkerContribution(workersInfo[workerName]);
     } else if (
       workerName.includes(COMPANY_FEE_WORKER_PREFIX) ||
       workerName.includes(COMPANY_FULL_TIME_WORKER_PREFIX)
     ) {
-      workerContributions.companyWorkers.set(
-        workerName,
-        convertSlushPoolWorkerContribution(workersInfo[workerName])
-      );
+      workerContributions.companyWorkers[workerName] =
+        convertSlushPoolWorkerContribution(workersInfo[workerName]);
     }
     return workerContributions;
   }, buildInitialWorkerContributions());

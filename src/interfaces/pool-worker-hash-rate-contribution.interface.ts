@@ -3,18 +3,25 @@ import { HashRate } from "./performance/hash-rate.interface";
 import { TimeRange } from "./performance/time.interface";
 import { Pool } from "./pool.interface";
 
+export type WorkerMap = { [key: string]: HashRate };
+
 export type WorkerContribution = {
-  clientWorkers: Map<string, HashRate>;
-  companyWorkers: Map<string, HashRate>;
+  clientWorkers: WorkerMap;
+  companyWorkers: WorkerMap;
+};
+
+export type PoolWorkerHashRateContributionModel = {
+  _id: Types.ObjectId;
+  timeRange: TimeRange;
+  poolUsername: string;
+  clientWorkers: string;
+  companyWorkers: string;
 };
 
 export type PoolWorkerHashRateContribution = {
   _id: Types.ObjectId;
   timeRange: TimeRange;
-  pool: Pool;
-  workerContributions: WorkerContribution;
+  poolUsername: string;
+  clientWorkers: WorkerMap;
+  companyWorkers: WorkerMap;
 };
-
-export const POOL_WORKER_HASH_RATE_CONTRIBUTION_FIELDS_TO_POPULATE = [
-  { path: "pool" },
-];

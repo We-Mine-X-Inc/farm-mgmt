@@ -129,11 +129,10 @@ class PoolSwitchScheduler {
       const contract = await this.contractService.findContractById(
         jobData.contractId
       );
-      const miner = await this.minerService.findMinerById(jobData.minerId);
-      const pool = await this.poolService.findPoolById(
+      const miner = contract.miner;
+      const pool =
         contract.hostingContract.poolMiningOptions[jobData.activePoolStateIndex]
-          .pool._id
-      );
+          .pool;
       const poolVerificationFunction = POOL_VERIFICATION_FUNCTION[miner.API];
       const rebootMinerFunction = REBOOT_MINER_FUNCTION[miner.API];
 

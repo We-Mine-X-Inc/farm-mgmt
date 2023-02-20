@@ -22,6 +22,7 @@ import {
   sendMinerOfflineNotification,
   sendMinerOnlineNotification,
 } from "@/alerts/notifications";
+import { format as prettyFormat } from "pretty-format";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
@@ -85,7 +86,7 @@ class MinerStatusScheduler {
             })
           ).hostingContract.poolMiningOptions;
           const activePoolIndex =
-            this.poolSwitchScheduler.getActivePoolIndexForMiner(miner);
+            await this.poolSwitchScheduler.getActivePoolIndexForMiner(miner);
           const checkHashRate = HASHRATE_VERIFICATION_FUNCTION[miner.API];
           const checkTemperature = TEMPERATURE_VERIFICATION_FUNCTION[miner.API];
           const checkFanSpeed = FAN_SPEED_VERIFICATION_FUNCTION[miner.API];

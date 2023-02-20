@@ -7,8 +7,6 @@ export const POOL_METRICS_API_DOMAIN = {
 };
 
 export function getApiHeaders(pool: Pool) {
-  console.log("getApiHeaders pool:");
-  console.log(pool);
   switch (pool.poolType) {
     case PoolType.POOL_MARS:
       return { Accept: "application/json" };
@@ -17,8 +15,9 @@ export function getApiHeaders(pool: Pool) {
         Accept: "application/json",
         "SlushPool-Auth-Token": pool.apiToken,
       };
-    default: {
-      Accept: "application/json";
-    }
+    default:
+      return {
+        Accept: "application/json",
+      };
   }
 }

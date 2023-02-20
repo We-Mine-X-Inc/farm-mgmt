@@ -243,7 +243,7 @@ export async function verifyGoldshellHashRate(miner: Miner) {
     headers: getRequestHeaders(authToken),
   }).then((res) => {
     const chipStats = res.data["data"];
-    const chipHashRates = chipStats.map((chipStat) => chipStat["hashRate"]);
+    const chipHashRates = chipStats.map((chipStat) => chipStat["hashrate"]);
     const actualHashRate = chipHashRates.reduce(
       (partialSum, a) => partialSum + a,
       0

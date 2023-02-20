@@ -8,9 +8,6 @@ export function convertSlushPoolDataToRevenue({
   data: any;
   coinType: CoinType;
 }): Revenue {
-  console.log("convertSlushPoolDataToRevenue");
-  console.log("data");
-  console.log(data);
   const btcInfo = data["btc"];
   return {
     amount:

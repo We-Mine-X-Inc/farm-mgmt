@@ -51,24 +51,30 @@ class PoolPerformanceScheduler {
     this.scheduler.define(
       JOB_NAMES.COLLECT_HASH_RATE_METRICS,
       async (job, done) => {
-        setMaxListeners(100); // I should set it higher in general since I will often do parallel processing
-        (await this.poolService.findAllPools()).forEach(async (pool) => {
+        // setMaxListeners(100); // I should set it higher in general since I will often do parallel processing
+        const evaluatedPoolUsername = {};
+        const pools = await this.poolService.findAllPools();
+        for (const pool of pools) {
+          if (pool.username in evaluatedPoolUsername) {
+            continue;
+          }
+
+          evaluatedPoolUsername[pool.username] = true;
           const timeRange = {
             startInMillis: Date.now() - ONE_HOUR_IN_MILLIS,
             endInMillis: Date.now(),
           };
           const workerContributions =
             await fetchWorkerHashRateContributionsData(pool);
-          console.log("workerContributions");
-          console.log(workerContributions);
           await this.poolWorkerHashRateContributionService.addWorkerHashRateContribution(
             {
-              poolId: pool._id,
+              poolUsername: pool.username,
               timeRange,
-              workerContributions,
+              clientWorkers: workerContributions.clientWorkers,
+              companyWorkers: workerContributions.companyWorkers,
             }
           );
-        });
+        }
         done();
       }
     );
@@ -98,8 +104,8 @@ class PoolPerformanceScheduler {
 
     await this.removePreviousJobs();
 
-    // this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_REVENUE_METRICS);
-    this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_HASH_RATE_METRICS);
+    this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_REVENUE_METRICS);
+    // this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_HASH_RATE_METRICS);
   }
 
   private async removePreviousJobs() {
