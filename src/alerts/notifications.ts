@@ -4,34 +4,35 @@ import {
   SLACK_POOL_SWITCHING_INFO_URL,
   SLACK_POOL_SWITCHING_ERROR_URL,
 } from "@/config";
-import { SwitchPoolParams } from "@/poolswitch/common-types";
+import { VerifyPoolParams } from "@/poolswitch/common-types";
 import { Miner } from "@/interfaces/miner.interface";
 
-export function sendSuccessfulSwitchEmail(params: {
-  switchParams: SwitchPoolParams;
-}) {
+export function sendSuccessfulSwitchEmail(verifyPoolParams: VerifyPoolParams) {
   const text = `
     Successfully Switched to Pool
     
     The server was able to successfully switch for params: ${prettyFormat(
-      params.switchParams
+      verifyPoolParams
     )}.`;
 
   sendInfo(text);
 }
 
-export function sendFailureSwitchEmail(params: {
-  switchParams: SwitchPoolParams;
+export function sendFailureSwitchEmail({
+  verifyPoolParams,
+  error,
+}: {
+  verifyPoolParams: VerifyPoolParams;
   error: string;
 }) {
   const text = `
     Failed to Switch to Pool
 
     The server was unable to switch the pool for params: ${prettyFormat(
-      params.switchParams
+      verifyPoolParams
     )}.
       
-    ${params.error}`;
+    ${error}`;
 
   sendError(text);
 }
@@ -52,18 +53,6 @@ export function sendMinerOfflineNotification(miner: Miner) {
     
     The following miner went offline:
     ${prettyFormat(miner)}.`;
-
-  sendInfo(text);
-}
-
-export function sendFailureToRemoveInterruptedJob(e: string) {
-  const text = `
-    Failed to Remove Obsolete Interrupted Job
-
-    The server was unable to garbage collect the obsolete interrupted
-    job due to the following error:
-    
-    ${e}.`;
 
   sendError(text);
 }

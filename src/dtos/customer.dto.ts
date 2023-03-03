@@ -18,11 +18,11 @@ export class CreateCustomerDto {
 
   @IsOptional()
   @IsPhoneNumber()
-  public phoneNumber: string;
+  public phoneNumber?: string;
 
   @IsOptional()
   @IsString()
-  public address: string;
+  public address?: string;
 
   @IsBoolean()
   public isCompanyCustomer: boolean;

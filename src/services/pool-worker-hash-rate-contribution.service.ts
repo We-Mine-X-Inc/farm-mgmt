@@ -4,10 +4,14 @@ import {
   ListPoolWorkerHashRateContributionResponseDto,
 } from "@/dtos/pool-worker-hash-rate-contribution.dto";
 import { HttpException } from "@/exceptions/HttpException";
-import { PoolWorkerHashRateContribution } from "@/interfaces/pool-worker-hash-rate-contribution.interface";
+import {
+  PoolWorkerHashRateContribution,
+  PoolWorkerHashRateContributionModel,
+} from "@/interfaces/pool-worker-hash-rate-contribution.interface";
 import poolWorkerHashRateContributionModel from "@/models/pool-worker-hash-rate-contribution.model";
 import { logger } from "@/utils/logger";
 import { isEmpty } from "@/utils/util";
+import { format as prettyFormat } from "pretty-format";
 
 /** CRUD operations for hash rate metrics for pool workers for a miner. */
 class PoolWorkerHashRateContributionService {
@@ -53,24 +57,31 @@ class PoolWorkerHashRateContributionService {
         "You're not a ListPoolWorkerHashRateContributionRequestDto"
       );
 
-    const poolWorkerContributions: PoolWorkerHashRateContribution[] =
+    const poolWorkerContributions: PoolWorkerHashRateContributionModel[] =
       await this.poolWorkerHashRateContributionModel.find({
-        poolUsername: request.poolUsername,
+        poolUsername: { $in: request.poolUsernames },
         "timeRange.startInMillis": {
           $lte: request.timeRange.endInMillis,
         },
         "timeRange.endInMillis": { $gte: request.timeRange.startInMillis },
       });
-    return { poolWorkerContributions };
+
+    return {
+      poolWorkerContributions: poolWorkerContributions.map((model) =>
+        this.convertPoolWorkerHashRateContribution(model)
+      ),
+    };
   }
 
   private convertPoolWorkerHashRateContribution(
-    newContributionModel
+    contributionModel
   ): PoolWorkerHashRateContribution {
     return {
-      ...newContributionModel,
-      clientWorkers: JSON.parse(newContributionModel.clientWorkers),
-      companyWorkers: JSON.parse(newContributionModel.companyWorkers),
+      _id: contributionModel._id,
+      timeRange: contributionModel.timeRange,
+      poolUsername: contributionModel.poolUsername,
+      clientWorkers: JSON.parse(contributionModel.clientWorkers),
+      companyWorkers: JSON.parse(contributionModel.companyWorkers),
     };
   }
 }

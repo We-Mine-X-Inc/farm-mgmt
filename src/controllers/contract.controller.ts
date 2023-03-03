@@ -1,5 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { CreateContractDto } from "@/dtos/contract.dto";
+import {
+  CreateContractDto,
+  MutatableContractFields,
+  UpdateContractDto,
+} from "@/dtos/contract.dto";
 import { Contract } from "@/interfaces/contract.interface";
 import ContractService from "@services/contract.service";
 import { Types } from "mongoose";
@@ -67,12 +71,9 @@ class ContractsController {
   ) => {
     try {
       const contractId: string = req.params.id;
-      const contractData: CreateContractDto = req.body;
+      const request: UpdateContractDto = req.body;
       const updateContractData: Contract =
-        await this.contractService.updateContract(
-          new Types.ObjectId(contractId),
-          contractData
-        );
+        await this.contractService.updateContract(request);
 
       res.status(200).json({ data: updateContractData, message: "updated" });
     } catch (error) {

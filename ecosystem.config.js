@@ -4,53 +4,56 @@
  *  production mode :: pm2 start ecosystem.config.js --only prod
  *  development mode :: pm2 start ecosystem.config.js --only dev
  */
- module.exports = {
+module.exports = {
   apps: [
     {
-      name: 'all_services_prod', // pm2 start App name
-      script: './dist/server.js', // node
-      exec_mode: 'cluster', // 'cluster' or 'fork'
-      instance_var: 'INSTANCE_ID', // instance variable
+      name: "all_services_prod", // pm2 start App name
+      script: "./dist/server.js", // node
+      exec_mode: "cluster", // 'cluster' or 'fork'
+      instance_var: "INSTANCE_ID", // instance variable
       instances: 1, // pm2 instance count
       autorestart: true, // auto restart if process crash
       watch: false, // files change automatic restart
-      ignore_watch: ['node_modules', 'logs'], // ignore files change
-      max_memory_restart: '5G', // restart if process use more than 1G memory
+      ignore_watch: ["node_modules", "logs"], // ignore files change
+      max_memory_restart: "5G", // restart if process use more than 5G memory
       merge_logs: true, // if true, stdout and stderr will be merged and sent to pm2 log
-      output: './logs/pm2/access.log', // pm2 log file
-      error: './logs/pm2/error.log', // pm2 error log file
-      env: { // environment variable
+      output: "./logs/pm2/access.log", // pm2 log file
+      error: "./logs/pm2/error.log", // pm2 error log file
+      env: {
+        // environment variable
         PORT: 5000,
-        NODE_ENV: 'prod',
+        NODE_ENV: "prod",
       },
     },
     {
-      name: 'all_services_dev', // pm2 start App name
-      script: './dist/server.js', // node
-      exec_mode: 'cluster', // 'cluster' or 'fork'
-      instance_var: 'INSTANCE_ID', // instance variable
+      name: "all_services_dev", // pm2 start App name
+      script: "./dist/server.js", // node
+      exec_mode: "cluster", // 'cluster' or 'fork'
+      instance_var: "INSTANCE_ID", // instance variable
       instances: 1, // pm2 instance count
       autorestart: true, // auto restart if process crash
       watch: false, // files change automatic restart
-      ignore_watch: ['node_modules', 'logs'], // ignore files change
-      max_memory_restart: '1G', // restart if process use more than 1G memory
+      ignore_watch: ["node_modules", "logs"], // ignore files change
+      max_memory_restart: "1G", // restart if process use more than 1G memory
       merge_logs: true, // if true, stdout and stderr will be merged and sent to pm2 log
-      output: './logs/pm2/access.log', // pm2 log file
-      error: './logs/pm2/error.log', // pm2 error log file
-      env: { // environment variable
+      output: "./logs/pm2/access.log", // pm2 log file
+      error: "./logs/pm2/error.log", // pm2 error log file
+      env: {
+        // environment variable
         PORT: 5000,
-        NODE_ENV: 'dev',
+        NODE_ENV: "dev",
       },
     },
   ],
   deploy: {
     production: {
-      user: 'user',
-      host: '0.0.0.0',
-      ref: 'origin/master',
-      repo: 'git@github.com:repo.git',
-      path: 'dist/server.js',
-      'post-deploy': 'npm install && npm run build && pm2 reload ecosystem.config.js --only prod',
+      user: "user",
+      host: "0.0.0.0",
+      ref: "origin/master",
+      repo: "git@github.com:repo.git",
+      path: "dist/server.js",
+      "post-deploy":
+        "npm install && npm run build && pm2 reload ecosystem.config.js --only prod",
     },
   },
 };

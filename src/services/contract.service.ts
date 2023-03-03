@@ -1,4 +1,4 @@
-import { CreateContractDto } from "@/dtos/contract.dto";
+import { CreateContractDto, UpdateContractDto } from "@/dtos/contract.dto";
 import { HttpException } from "@exceptions/HttpException";
 import {
   Contract,
@@ -49,7 +49,12 @@ class ContractService {
       .populate(CONTRACT_FIELDS_TO_POPULATE);
 
     if (!findContract)
-      throw new HttpException(409, `You're not contract: ${findContract}`);
+      throw new HttpException(
+        409,
+        `The following request: 
+        ${prettyFormat(request)} resulted in contract: 
+        ${prettyFormat(findContract)}`
+      );
 
     return findContract;
   }
@@ -73,34 +78,20 @@ class ContractService {
       );
 
     const createContractData: Contract = await this.contracts.create({
-      ...contractData,
+      miner: contractData.miner,
+      ...contractData.mutatableContractFields,
     });
 
     return createContractData;
   }
 
-  public async updateContract(
-    contractId: Types.ObjectId,
-    contractData: CreateContractDto
-  ): Promise<Contract> {
-    if (isEmpty(contractData))
+  public async updateContract(request: UpdateContractDto): Promise<Contract> {
+    if (isEmpty(request))
       throw new HttpException(400, "You're not contractData");
 
-    if (contractData.miner) {
-      const findContract: Contract = await this.contracts.findOne({
-        miner: contractData.miner,
-      });
-      if (findContract && !findContract._id.equals(contractId))
-        throw new HttpException(
-          409,
-          `You cannot apply an existing contract to a miner. You must create
-          a new contract with the minerId already set.`
-        );
-    }
-
     const updateContractById: Contract = await this.contracts.findByIdAndUpdate(
-      contractId,
-      { ...contractData }
+      request.contractId,
+      { ...request.mutatedFields }
     );
     if (!updateContractById) {
       throw new HttpException(409, "You're not contract");

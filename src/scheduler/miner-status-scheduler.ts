@@ -51,7 +51,7 @@ class MinerStatusScheduler {
   private poolSwitchScheduler = PoolSwitchScheduler.get();
   private isSchedulerStarted = false;
 
-  static get() {
+  static get(): MinerStatusScheduler {
     if (minerStatusScheduler) {
       return minerStatusScheduler;
     }
@@ -80,13 +80,11 @@ class MinerStatusScheduler {
         );
 
         for (let miner of miners) {
-          const pools = (
-            await this.contractService.findContractByMiner({
-              minerId: miner._id,
-            })
-          ).hostingContract.poolMiningOptions;
-          const activePoolIndex =
-            await this.poolSwitchScheduler.getActivePoolIndexForMiner(miner);
+          const contract = await this.contractService.findContractByMiner({
+            minerId: miner._id,
+          });
+          const pools = contract.hostingContract.poolMiningOptions;
+          const activePoolIndex = contract.poolActivity.expectedActivePoolIndex;
           const checkHashRate = HASHRATE_VERIFICATION_FUNCTION[miner.API];
           const checkTemperature = TEMPERATURE_VERIFICATION_FUNCTION[miner.API];
           const checkFanSpeed = FAN_SPEED_VERIFICATION_FUNCTION[miner.API];

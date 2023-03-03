@@ -1,5 +1,6 @@
 import {
   HostingContract,
+  PoolActivity,
   ResaleContract,
 } from "@/interfaces/contract.interface";
 import { Customer } from "@/interfaces/customer.interface";
@@ -7,21 +8,36 @@ import { Miner } from "@/interfaces/miner.interface";
 import { IsBoolean, IsObject, IsOptional } from "class-validator";
 import { Types } from "mongoose";
 
-export class CreateContractDto {
+export class MutatableContractFields {
+  @IsOptional()
   @IsObject()
-  public customer: Customer;
+  public customer?: Customer;
 
+  @IsOptional()
+  @IsObject()
+  public hostingContract?: HostingContract;
+
+  @IsOptional()
+  @IsObject()
+  public resaleContract?: ResaleContract;
+
+  @IsOptional()
+  @IsObject()
+  public poolActivity?: PoolActivity;
+}
+
+export class CreateContractDto {
   @IsObject()
   public miner: Miner;
 
-  @IsBoolean()
-  public isActive: Boolean;
-
-  @IsOptional()
   @IsObject()
-  public hostingContract: HostingContract;
+  public mutatableContractFields: MutatableContractFields;
+}
 
-  @IsOptional()
+export class UpdateContractDto {
   @IsObject()
-  public resaleContract: ResaleContract;
+  public contractId: Types.ObjectId;
+
+  @IsObject()
+  public mutatedFields: MutatableContractFields;
 }

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+su - ubuntu
+
 # Set LAUNCH_ENV to dictate which folders will be mutated.
 LAUNCH_ENV=prod
 

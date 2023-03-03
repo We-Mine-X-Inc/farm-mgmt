@@ -1,12 +1,14 @@
 import { PoolRevenue } from "@/interfaces/pool-revenue.interface";
 import { Revenue } from "@/interfaces/performance/revenue.interface";
-import { TimeRange } from "@/interfaces/performance/time.interface";
-import { IsObject, IsOptional } from "class-validator";
-import { Types } from "mongoose";
+import {
+  TimeRange,
+  TimeSingleton,
+} from "@/interfaces/performance/time.interface";
+import { IsArray, IsObject, IsOptional } from "class-validator";
 
 export class AddPoolRevenueDto {
   @IsObject()
-  public poolId: Types.ObjectId;
+  public poolUsername: string;
 
   @IsObject()
   public timeRange: TimeRange;
@@ -15,13 +17,20 @@ export class AddPoolRevenueDto {
   public cummulativeProfits: Revenue;
 }
 
-export class GetPoolRevenueRequestDto {
+export class ListPoolRevenueRequestDto {
+  @IsArray()
+  public poolUsernames: string[];
+
+  @IsOptional()
   @IsObject()
-  public poolId: Types.ObjectId;
+  public timeRange?: TimeRange;
+
+  @IsOptional()
+  @IsObject()
+  public timeSingleton?: TimeSingleton;
 }
 
-export class GetPoolRevenueResponseDto {
-  @IsObject()
-  @IsOptional()
-  public poolRevenue: PoolRevenue;
+export class ListPoolRevenueResponseDto {
+  @IsArray()
+  public poolRevenues: PoolRevenue[];
 }

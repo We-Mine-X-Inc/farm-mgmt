@@ -11,18 +11,13 @@ import { logger, stream } from "@utils/logger";
 import PoolSwitchScheduler from "./scheduler/pool-switch-scheduler";
 import ServerUptimeScheduler from "./scheduler/server-uptime-scheduler";
 import MinerStatusScheduler from "./scheduler/miner-status-scheduler";
-import InventoryItemService from "./services/inventory-item.service";
 import PoolPerformanceScheduler from "./scheduler/pool-performance-scheduler";
-import ContractService from "./services/contract.service";
-import { Types } from "mongoose";
-import { Contract } from "./interfaces/contract.interface";
+import MonitoringUptimeScheduler from "./scheduler/monitoring-uptime-scheduler";
 
 class App {
   public app: express.Application;
   public env: string;
   public port: string | number;
-  public inventoryItemService = new InventoryItemService();
-  private contractService = new ContractService();
 
   constructor(routes: Routes[]) {
     this.app = express();
@@ -67,6 +62,7 @@ class App {
     await ServerUptimeScheduler.get().startScheduler();
     await MinerStatusScheduler.get().startScheduler();
     await PoolPerformanceScheduler.get().startScheduler();
+    await MonitoringUptimeScheduler.get().startScheduler();
   }
 
   private initializeMiddlewares() {

@@ -1,9 +1,9 @@
 #!/bin/bash
 
-LAUNCH_ENV=dev
-PM2_JOB_NAME=all_services_$LAUNCH_ENV # Defined within ecosystem.config.js
+su - ubuntu
 
-sudo -s
+LAUNCH_ENV=prod
+PM2_JOB_NAME=all_services_$LAUNCH_ENV # Defined within ecosystem.config.js
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

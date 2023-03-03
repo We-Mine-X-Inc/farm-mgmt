@@ -40,8 +40,9 @@ export enum MinerIntakeStage {
 export enum ContractStage {
   UNKNOWN = 0,
   ACTIVE = 1,
-  IN_ACTIVE = 2,
+  INACTIVE = 2,
   CANCELED = 3,
+  COMPANY_ONLY = 4,
 }
 
 export type HostingContract = {
@@ -70,6 +71,10 @@ export type MarketInfo = {
   minerMarketInfo: MinerMarketInfo;
 };
 
+export type PoolActivity = {
+  expectedActivePoolIndex: number;
+};
+
 export interface Contract {
   _id: Types.ObjectId;
   previousContract: Contract;
@@ -80,6 +85,7 @@ export interface Contract {
   hostingContract?: HostingContract;
   resaleContract?: ResaleContract;
   marketInfoAtRatification: MarketInfo;
+  poolActivity: PoolActivity;
 }
 
 export const CONTRACT_FIELDS_TO_POPULATE = [

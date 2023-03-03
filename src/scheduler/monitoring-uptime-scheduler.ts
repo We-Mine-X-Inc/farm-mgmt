@@ -1,44 +1,42 @@
 import { Agenda } from "agenda/es";
 import { dbConnection } from "@databases";
-import UptimeTickService from "@/services/uptime-tick.service";
-import { CreateUptimeTickDto } from "@/dtos/uptime-tick.dto";
 import {
   AGENDA_MAX_OVERALL_CONCURRENCY,
   AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
 } from "@config";
 import { agendaSchedulerManager } from "./agenda-scheduler-manager";
+import { logger } from "@/utils/logger";
+
+const LOG_MSG_TO_VERIFY_MONITORING_IS_ONLINE = "VERIFY_SUCCESSFUL_MONITORING";
 
 const JOB_NAMES = {
-  UPTIME_PROBE: "Track Process Uptime",
+  UPTIME_PROBE: "Track Monitoring Uptime",
 };
 
-let serverUptimeScheduler;
+let monitoringUptimeScheduler;
 
-class ServerUptimeScheduler {
+class MonitoringUptimeScheduler {
   private scheduler: Agenda = agendaSchedulerManager.create({
     maxConcurrency: AGENDA_MAX_OVERALL_CONCURRENCY,
     defaultConcurrency: AGENDA_MAX_SINGLE_JOB_CONCURRENCY,
-    db: { address: dbConnection.url, collection: "serverUptimeJobs" },
+    db: { address: dbConnection.url, collection: "monitoringUptimeJobs" },
   });
-
-  public uptimeTickService: UptimeTickService = new UptimeTickService();
 
   private constructor() {
     this.loadTasksDefinitions();
   }
 
-  static get(): ServerUptimeScheduler {
-    if (serverUptimeScheduler) {
-      return serverUptimeScheduler;
+  static get(): MonitoringUptimeScheduler {
+    if (monitoringUptimeScheduler) {
+      return monitoringUptimeScheduler;
     }
-    serverUptimeScheduler = new ServerUptimeScheduler();
-    return serverUptimeScheduler;
+    monitoringUptimeScheduler = new MonitoringUptimeScheduler();
+    return monitoringUptimeScheduler;
   }
 
   private loadTasksDefinitions() {
     this.scheduler.define(JOB_NAMES.UPTIME_PROBE, async (job, done) => {
-      const uptimeTick: CreateUptimeTickDto = { datetime: new Date() };
-      await this.uptimeTickService.createUptimeTick(uptimeTick);
+      logger.info(LOG_MSG_TO_VERIFY_MONITORING_IS_ONLINE);
       done();
     });
   }
@@ -56,4 +54,4 @@ class ServerUptimeScheduler {
   }
 }
 
-export default ServerUptimeScheduler;
+export default MonitoringUptimeScheduler;

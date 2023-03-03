@@ -22,8 +22,8 @@ export class AddPoolWorkerHashRateContributionDto {
 }
 
 export class ListPoolWorkerHashRateContributionRequestDto {
-  @IsString()
-  public poolUsername: Types.ObjectId;
+  @IsArray()
+  public poolUsernames: string[];
 
   @IsObject()
   public timeRange: TimeRange;

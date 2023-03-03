@@ -6,7 +6,7 @@ import { Pool } from "./pool.interface";
 export type PoolRevenue = {
   _id: Types.ObjectId;
   timeRange: TimeRange;
-  pool: Pool;
+  poolUsername: string;
   cummulativeProfits: Revenue;
 };
 

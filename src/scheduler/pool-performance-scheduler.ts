@@ -7,14 +7,10 @@ import {
 import { agendaSchedulerManager } from "./agenda-scheduler-manager";
 import PoolRevenueService from "@/services/pool-revenue.service";
 import PoolWorkerHashRateContributionService from "@/services/pool-worker-hash-rate-contribution.service";
-import { Types } from "mongoose";
-import ContractService from "@/services/contract.service";
 import PoolService from "@/services/pool.service";
 import { fetchRevenueData } from "@/performance/revenue/pool-revenue";
 import { fetchWorkerHashRateContributionsData } from "@/performance/hashrate/pool-hashrate";
-import { setMaxListeners } from "events";
-
-const ONE_HOUR_IN_MILLIS = 60 * 60 * 1000;
+import { ONE_HOUR_IN_MILLIS } from "@/constants/time";
 
 const JOB_NAMES = {
   COLLECT_REVENUE_METRICS: "Collect Revenue Metrics",
@@ -39,7 +35,7 @@ class PoolPerformanceScheduler {
     this.loadTasksDefinitions();
   }
 
-  static get() {
+  static get(): PoolPerformanceScheduler {
     if (poolPerformanceScheduler) {
       return poolPerformanceScheduler;
     }
@@ -82,18 +78,25 @@ class PoolPerformanceScheduler {
     this.scheduler.define(
       JOB_NAMES.COLLECT_REVENUE_METRICS,
       async (job, done) => {
-        (await this.poolService.findAllPools()).forEach(async (pool) => {
+        const evaluatedPoolUsername = {};
+        const pools = await this.poolService.findAllPools();
+        for (const pool of pools) {
+          if (pool.username in evaluatedPoolUsername) {
+            continue;
+          }
+
+          evaluatedPoolUsername[pool.username] = true;
           const timeRange = {
             startInMillis: Date.now() - ONE_HOUR_IN_MILLIS,
             endInMillis: Date.now(),
           };
           const cummulativeProfits = await fetchRevenueData(pool);
           await this.poolRevenueService.addPoolRevenue({
-            poolId: pool._id,
+            poolUsername: pool.username,
             timeRange,
             cummulativeProfits,
           });
-        });
+        }
         done();
       }
     );
@@ -105,7 +108,7 @@ class PoolPerformanceScheduler {
     await this.removePreviousJobs();
 
     this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_REVENUE_METRICS);
-    // this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_HASH_RATE_METRICS);
+    this.scheduler.every("60 minutes", JOB_NAMES.COLLECT_HASH_RATE_METRICS);
   }
 
   private async removePreviousJobs() {

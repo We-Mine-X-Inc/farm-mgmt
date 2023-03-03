@@ -11,7 +11,6 @@ class PoolSwitchController {
   ) => {
     try {
       const miningContracts = req.body;
-      this.poolSwitchScheduler.startNewJobs(miningContracts);
       res.status(200);
     } catch (error) {
       next(error);

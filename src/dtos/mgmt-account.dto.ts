@@ -19,11 +19,11 @@ export class CreateMgmtAccountDto {
 
   @IsOptional()
   @IsPhoneNumber()
-  public phoneNumber: string;
+  public phoneNumber?: string;
 
   @IsOptional()
   @IsString()
-  public address: string;
+  public address?: string;
 
   @IsObject()
   public mgmtPermissions: MgmtPermissions;

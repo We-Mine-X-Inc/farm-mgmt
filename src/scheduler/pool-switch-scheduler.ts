@@ -18,6 +18,11 @@ import {
   POOL_VERIFICATION_FUNCTION,
   REBOOT_MINER_FUNCTION,
 } from "@/poolswitch/miner-operation-maps";
+import {
+  sendFailureSwitchEmail,
+  sendSuccessfulSwitchEmail,
+} from "@/alerts/notifications";
+import { format as prettyFormat } from "pretty-format";
 
 const JOB_NAMES = {
   SWITCH_POOL: "Switch Pool",
@@ -56,7 +61,7 @@ class PoolSwitchScheduler {
   });
   private isSchedulerStarted: boolean = false;
 
-  static get() {
+  static get(): PoolSwitchScheduler {
     if (poolSwitchScheduler) {
       return poolSwitchScheduler;
     }
@@ -101,6 +106,16 @@ class PoolSwitchScheduler {
           logger.error(error);
         })
         .finally(async () => {
+          await this.contractService.updateContract({
+            contractId: contract._id,
+            mutatedFields: {
+              poolActivity: {
+                expectedActivePoolIndex:
+                  (jobData.activePoolStateIndex + 1) %
+                  contract.hostingContract.poolMiningOptions.length,
+              },
+            },
+          });
           const attemptCount = 1;
           const elapsedTimeBeforeVerifying = new Date(
             Date.now() + this.getTimeToWaitBeforeVerifyPoolSwitch(attemptCount)
@@ -129,15 +144,19 @@ class PoolSwitchScheduler {
       const contract = await this.contractService.findContractById(
         jobData.contractId
       );
-      const miner = contract.miner;
-      const pool =
+      const miner = await this.minerService.findMinerById(contract.miner._id);
+      const pool = await this.poolService.findPoolById(
         contract.hostingContract.poolMiningOptions[jobData.activePoolStateIndex]
-          .pool;
+          .pool._id
+      );
       const poolVerificationFunction = POOL_VERIFICATION_FUNCTION[miner.API];
       const rebootMinerFunction = REBOOT_MINER_FUNCTION[miner.API];
+      const verifyPoolParams = { miner, pool };
 
-      await poolVerificationFunction({ miner, pool })
+      await poolVerificationFunction(verifyPoolParams)
         .then(() => {
+          sendSuccessfulSwitchEmail(verifyPoolParams);
+
           if (jobData.isContractCompleted) {
             return Promise.resolve();
           }
@@ -165,6 +184,8 @@ class PoolSwitchScheduler {
         })
         .catch((error) => {
           logger.error(error);
+          sendFailureSwitchEmail({ verifyPoolParams, error });
+
           const attemptCount = jobData.attemptCount + 1;
           const elapsedTimeBeforeVerifying = new Date(
             Date.now() + this.getTimeToWaitBeforeVerifyPoolSwitch(attemptCount)
@@ -244,6 +265,20 @@ class PoolSwitchScheduler {
       { lastFinishedAt: -1 }, // Sort
       1 // Limit
     );
+    return latestVerifiedSwitch[0].attrs.data.activePoolStateIndex;
+  }
+
+  public async getActivePoolIndexForMinerTest(minerId: Types.ObjectId) {
+    const latestVerifiedSwitch = await this.scheduler.jobs(
+      {
+        name: JOB_NAMES.VERIFY_POOL_SWITCH,
+        lastFinishedAt: { $exists: true },
+        "data.minerId": minerId,
+      }, // Find
+      { lastFinishedAt: -1 }, // Sort
+      1 // Limit
+    );
+    console.log(prettyFormat(latestVerifiedSwitch));
     return latestVerifiedSwitch[0].attrs.data.activePoolStateIndex;
   }
 

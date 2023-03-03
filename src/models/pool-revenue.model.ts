@@ -4,9 +4,8 @@ import { RevenueSchema } from "./performance/revenue.model";
 import { TimeRangeSchema } from "./performance/time.model";
 
 const poolRevenueSchema: Schema = new Schema({
-  pool: {
-    type: Schema.Types.ObjectId,
-    ref: "Pool",
+  poolUsername: {
+    type: String,
     required: true,
   },
   timeRange: {

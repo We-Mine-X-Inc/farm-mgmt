@@ -46,6 +46,13 @@ const hostingContractSchema = {
   poolMiningOptions: [poolMiningOptionsSchema],
 };
 
+const poolActivitySchema = {
+  expectedActivePoolIndex: {
+    type: Number,
+    required: true,
+  },
+};
+
 const resaleContractSchema = {
   resaleStage: {
     type: Number,
@@ -116,10 +123,7 @@ const contractSchema: Schema = new Schema({
   hostingContract: hostingContractSchema,
   resaleContract: resaleContractSchema,
   marketInfoAtRatification: marketInfoAtRatificationSchema,
-  isActive: {
-    type: Boolean,
-    required: true,
-  },
+  poolActivity: poolActivitySchema,
 });
 
 const contractModel = model<Contract & Document>("Contract", contractSchema);

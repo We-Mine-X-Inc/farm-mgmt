@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { Miner } from "./miner.interface";
 
 export enum InventoryItemType {
   UNKNOWN = 0,
@@ -47,11 +48,16 @@ export type PowerSwitchMetadata = {
   clientDeviceName: string;
 };
 
+export type ConcreteItem = {
+  miner?: Miner;
+};
+
 export interface InventoryItem {
   _id: Types.ObjectId;
   type: InventoryItemType;
   status: InventoryItemStatus;
   model: string;
+  concreteItem?: ConcreteItem;
   operationalDependencies: [InventoryItem];
   operationalMetadata: OperationalMetadata;
 }

@@ -14,7 +14,7 @@ import { Types } from "mongoose";
 class MinerPerformancesController {
   public minerPerformanceService = new MinerPerformanceService();
 
-  public getMinerPerformances = async (
+  public getHashRatePerfForMiner = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -22,17 +22,15 @@ class MinerPerformancesController {
     try {
       const minerData: MinerPerformanceRequestDto = req.body;
       const findAllMinerPerformancesData: MinerPerformanceResponseDto =
-        await this.minerPerformanceService.getMinerPerformance({
+        await this.minerPerformanceService.getHashRateForMiner({
           minerId: minerData.minerId,
           timeRange: minerData.timeRange,
         });
 
-      res
-        .status(200)
-        .json({
-          data: findAllMinerPerformancesData,
-          message: "getMinerPerformances",
-        });
+      res.status(200).json({
+        data: findAllMinerPerformancesData,
+        message: "getHashRatePerfForMiner",
+      });
     } catch (error) {
       next(error);
     }
