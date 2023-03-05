@@ -2,6 +2,9 @@ name: Prod CI/CD Pipeline
 on:
   push:
     branches: [main]
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
 
 jobs:
   continuous-integration:
@@ -27,11 +30,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       # Step 1
-      - name: Configure AWS credentials
+      - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::975050823311:role/Github-CodeDeploy-FarmMgmt-Role
+          role-session-name: DeployBackendServer
           aws-region: us-east-2
       # Step 2
       - name: Create CodeDeploy Deployment

@@ -4,7 +4,7 @@ su - ubuntu
 
 # Variables
 USER=ubuntu
-LAUNCH_ENV=prod
+LAUNCH_ENV=prod-test
 APP_NAME=pool-switching
 CONFIG_LOCATION=/home/$USER/applications/configs/.env.$LAUNCH_ENV.local
 INITIAL_PUSH_LOCATION=/home/$USER/applications/farm-mgmt
@@ -12,7 +12,7 @@ DESTINATION_APP_LOCATION=/home/$USER/applications/$APP_NAME/$LAUNCH_ENV
 
 # Move folder to environment specific folder.
 mkdir -p $DESTINATION_APP_LOCATION
-mv $INITIAL_PUSH_LOCATION $DESTINATION_APP_LOCATION
+cp -r $INITIAL_PUSH_LOCATION/. $DESTINATION_APP_LOCATION/.
 cd $DESTINATION_APP_LOCATION
 
 # Copy environment specific config into directory.
