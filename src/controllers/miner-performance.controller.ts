@@ -22,7 +22,7 @@ class MinerPerformancesController {
     try {
       const minerData: MinerPerformanceRequestDto = req.body;
       const findAllMinerPerformancesData: MinerPerformanceResponseDto =
-        await this.minerPerformanceService.getHashRateForMiner({
+        await this.minerPerformanceService.getEarningsForMiner({
           minerId: minerData.minerId,
           timeRange: minerData.timeRange,
         });

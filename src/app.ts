@@ -13,11 +13,16 @@ import ServerUptimeScheduler from "./scheduler/server-uptime-scheduler";
 import MinerStatusScheduler from "./scheduler/miner-status-scheduler";
 import PoolPerformanceScheduler from "./scheduler/pool-performance-scheduler";
 import MonitoringUptimeScheduler from "./scheduler/monitoring-uptime-scheduler";
+import MinerPerformanceService from "./services/miner-performance.service";
+import { Types } from "mongoose";
+import { format as prettyFormat } from "pretty-format";
+import { ONE_HOUR_IN_MILLIS } from "./constants/time";
 
 class App {
   public app: express.Application;
   public env: string;
   public port: string | number;
+  private minerPerformanceService = new MinerPerformanceService();
 
   constructor(routes: Routes[]) {
     this.app = express();
@@ -58,11 +63,22 @@ class App {
       return;
     }
 
-    await PoolSwitchScheduler.get().startScheduler();
-    await ServerUptimeScheduler.get().startScheduler();
+    // await PoolSwitchScheduler.get().startScheduler();
+    // await ServerUptimeScheduler.get().startScheduler();
     await MinerStatusScheduler.get().startScheduler();
-    await PoolPerformanceScheduler.get().startScheduler();
-    await MonitoringUptimeScheduler.get().startScheduler();
+    // await PoolPerformanceScheduler.get().startScheduler();
+    // await MonitoringUptimeScheduler.get().startScheduler();
+
+    // const earnings = await this.minerPerformanceService.getEarningsForMiner({
+    //   minerId: new Types.ObjectId("63dad12d44fcb774c8dac641"),
+    //   timeRange: {
+    //     startInMillis: 1678111200000,
+    //     endInMillis: 1678111200000 + ONE_HOUR_IN_MILLIS,
+    //   },
+    // });
+
+    // console.log(prettyFormat("earnings"));
+    // console.log(prettyFormat(earnings));
   }
 
   private initializeMiddlewares() {

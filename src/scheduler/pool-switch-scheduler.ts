@@ -11,18 +11,18 @@ import {
 import { Types } from "mongoose";
 import { agendaSchedulerManager } from "./agenda-scheduler-manager";
 import ContractService from "@/services/contract.service";
-import { TimeConstants } from "./time-constants";
 import { logger } from "@/utils/logger";
 import {
   POOL_SWITCH_FUNCTION,
   POOL_VERIFICATION_FUNCTION,
   REBOOT_MINER_FUNCTION,
-} from "@/poolswitch/miner-operation-maps";
+} from "@/poolswitch/maps-of-miner-commands";
 import {
   sendFailureSwitchEmail,
   sendSuccessfulSwitchEmail,
 } from "@/alerts/notifications";
 import { format as prettyFormat } from "pretty-format";
+import { ONE_HOUR_IN_MILLIS, TEN_MINS_IN_MILLIS } from "@/constants/time";
 
 const JOB_NAMES = {
   SWITCH_POOL: "Switch Pool",
@@ -196,10 +196,11 @@ class PoolSwitchScheduler {
             previousJobId: job.attrs._id,
             failedSwitches: jobData.failedSwitches + 1,
           };
+
           return rebootMinerFunction({ miner, pool }).finally(() => {
             this.scheduler.schedule(
               elapsedTimeBeforeVerifying,
-              JOB_NAMES.VERIFY_POOL_SWITCH,
+              JOB_NAMES.SWITCH_POOL,
               updatedJobData
             );
           });
@@ -208,10 +209,7 @@ class PoolSwitchScheduler {
   }
 
   private getTimeToWaitBeforeVerifyPoolSwitch(attemptCount: number) {
-    return Math.min(
-      attemptCount * TimeConstants.TEN_MINIUTES,
-      TimeConstants.ONE_HOUR
-    );
+    return Math.min(attemptCount * TEN_MINS_IN_MILLIS, ONE_HOUR_IN_MILLIS);
   }
 
   /**
@@ -253,33 +251,6 @@ class PoolSwitchScheduler {
       };
       await this.scheduler.now(JOB_NAMES.SWITCH_POOL, jobData);
     });
-  }
-
-  public async getActivePoolIndexForMiner(miner: Miner) {
-    const latestVerifiedSwitch = await this.scheduler.jobs(
-      {
-        name: JOB_NAMES.VERIFY_POOL_SWITCH,
-        lastFinishedAt: { $exists: true },
-        "data.minerId": miner._id,
-      }, // Find
-      { lastFinishedAt: -1 }, // Sort
-      1 // Limit
-    );
-    return latestVerifiedSwitch[0].attrs.data.activePoolStateIndex;
-  }
-
-  public async getActivePoolIndexForMinerTest(minerId: Types.ObjectId) {
-    const latestVerifiedSwitch = await this.scheduler.jobs(
-      {
-        name: JOB_NAMES.VERIFY_POOL_SWITCH,
-        lastFinishedAt: { $exists: true },
-        "data.minerId": minerId,
-      }, // Find
-      { lastFinishedAt: -1 }, // Sort
-      1 // Limit
-    );
-    console.log(prettyFormat(latestVerifiedSwitch));
-    return latestVerifiedSwitch[0].attrs.data.activePoolStateIndex;
   }
 
   public async startScheduler() {

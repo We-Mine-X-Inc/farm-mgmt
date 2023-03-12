@@ -47,7 +47,6 @@ class PoolPerformanceScheduler {
     this.scheduler.define(
       JOB_NAMES.COLLECT_HASH_RATE_METRICS,
       async (job, done) => {
-        // setMaxListeners(100); // I should set it higher in general since I will often do parallel processing
         const evaluatedPoolUsername = {};
         const pools = await this.poolService.findAllPools();
         for (const pool of pools) {

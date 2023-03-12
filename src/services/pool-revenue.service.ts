@@ -45,11 +45,32 @@ class PoolRevenueService {
 
   private buildTimeRangeQuery(request: ListPoolRevenueRequestDto) {
     return this.poolRevenueModel.find({
-      poolUsername: { $in: request.poolUsernames },
-      "timeRange.startInMillis": {
-        $lte: request.timeRange.endInMillis,
-      },
-      "timeRange.endInMillis": { $gte: request.timeRange.startInMillis },
+      $or: [
+        {
+          // First timeRange if startInMillis lands in the middle a stored range.
+          poolUsername: { $in: request.poolUsernames },
+          "timeRange.startInMillis": {
+            $lte: request.timeRange.startInMillis,
+          },
+          "timeRange.endInMillis": { $gte: request.timeRange.startInMillis },
+        },
+        {
+          // Middle timeRanges if any exist.
+          poolUsername: { $in: request.poolUsernames },
+          "timeRange.startInMillis": {
+            $gte: request.timeRange.startInMillis,
+          },
+          "timeRange.endInMillis": { $lte: request.timeRange.endInMillis },
+        },
+        {
+          // Last timeRange if endInMillis lands in the middle a stored range.
+          poolUsername: { $in: request.poolUsernames },
+          "timeRange.startInMillis": {
+            $lte: request.timeRange.endInMillis,
+          },
+          "timeRange.endInMillis": { $gte: request.timeRange.endInMillis },
+        },
+      ],
     });
   }
 

@@ -5,10 +5,11 @@ su - ubuntu
 # Variables
 USER=ubuntu
 LAUNCH_ENV=prod-test
-APP_NAME=pool-switching
+SERVERS_DIR=all-servers
+# Path is defined in appspec.yml
+INITIAL_PUSH_LOCATION=/home/$USER/applications/all-servers-temp
+DESTINATION_APP_LOCATION=/home/$USER/applications/$SERVERS_DIR/$LAUNCH_ENV
 CONFIG_LOCATION=/home/$USER/applications/configs/.env.$LAUNCH_ENV.local
-INITIAL_PUSH_LOCATION=/home/$USER/applications/farm-mgmt
-DESTINATION_APP_LOCATION=/home/$USER/applications/$APP_NAME/$LAUNCH_ENV
 
 # Move folder to environment specific folder.
 mkdir -p $DESTINATION_APP_LOCATION

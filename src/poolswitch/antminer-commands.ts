@@ -1,6 +1,6 @@
 import { logger } from "@/utils/logger";
 import AxiosDigestAuth from "@mhoc/axios-digest-auth";
-import { SwitchPoolParams, VerifyPoolParams } from "./common-types";
+import { SwitchPoolParams, VerifyOperationsParams } from "./common-types";
 import { format as prettyFormat } from "pretty-format";
 import { Pool } from "@/interfaces/pool.interface";
 import { Miner } from "@/interfaces/miner.interface";
@@ -18,6 +18,7 @@ import {
   POOL_VERIFICATION_FAILURE_PREFIX,
 } from "./constants";
 import { getPoolWorker } from "./pool-workers";
+import { constructPoolUser } from "./pool-user";
 
 const ANTMINER_DEFAULTS = {
   MINER_USERNAME: "root",
@@ -72,9 +73,9 @@ async function getSytemInfo(ipAddress: string): Promise<PoolValidationInfo> {
   });
 }
 
-function verifyMinerIsForClient<T extends SwitchPoolParams | VerifyPoolParams>(
-  params: T
-): MinerValidator {
+function verifyMinerIsForClient<
+  T extends SwitchPoolParams | VerifyOperationsParams
+>(params: T): MinerValidator {
   return (validationInfo: PoolValidationInfo) => {
     if (validationInfo.macAddress != params.miner.macAddress) {
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
@@ -84,7 +85,7 @@ function verifyMinerIsForClient<T extends SwitchPoolParams | VerifyPoolParams>(
 }
 
 function getMinerConfig(
-  params?: SwitchPoolParams | VerifyPoolParams
+  params?: SwitchPoolParams | VerifyOperationsParams
 ): () => Promise<PoolConfigInfo> {
   return async () => {
     return await ANTMINER_DIGESTAUTH.request({
@@ -121,7 +122,7 @@ function updateMinerConfig(
 }
 
 function verifyLivePoolStatus(
-  verifyPoolParams: VerifyPoolParams
+  verifyPoolParams: VerifyOperationsParams
 ): () => Promise<any> {
   return async () => {
     return await ANTMINER_DIGESTAUTH.request({
@@ -174,10 +175,6 @@ function constructPoolUrl(pool: Pool) {
   return `${pool.protocol}://${pool.domain}`;
 }
 
-function constructPoolUser(params: SwitchPoolParams | VerifyPoolParams) {
-  return `${params.pool.username}.${getPoolWorker(params)}`;
-}
-
 export async function switchAntminerPool(
   params: SwitchPoolParams
 ): Promise<any> {
@@ -195,7 +192,7 @@ export async function switchAntminerPool(
 }
 
 export async function verifyAntminerPool(
-  params: VerifyPoolParams
+  params: VerifyOperationsParams
 ): Promise<any> {
   return await getSytemInfo(params.miner.ipAddress)
     .then(verifyMinerIsForClient(params))

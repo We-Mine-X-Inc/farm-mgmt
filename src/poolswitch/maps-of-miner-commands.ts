@@ -6,8 +6,8 @@ import {
   verifyAntminerHashRate,
   verifyAntminerPool,
   verifyAntminerTemperature,
-} from "./antminer-operations";
-import { SwitchPoolParams, VerifyPoolParams } from "./common-types";
+} from "./antminer-commands";
+import { SwitchPoolParams, VerifyOperationsParams } from "./common-types";
 import {
   rebootGoldshellMiner,
   switchGoldshellPool,
@@ -15,7 +15,7 @@ import {
   verifyGoldshellHashRate,
   verifyGoldshellPool,
   verifyGoldshellTemperature,
-} from "./goldshell-operations";
+} from "./goldshell-commands";
 import { format as prettyFormat } from "pretty-format";
 
 export const POOL_SWITCH_FUNCTION: Record<
@@ -29,7 +29,7 @@ export const POOL_SWITCH_FUNCTION: Record<
 
 export const POOL_VERIFICATION_FUNCTION: Record<
   MinerApiType,
-  (p: VerifyPoolParams) => Promise<any>
+  (p: VerifyOperationsParams) => Promise<any>
 > = {
   [MinerApiType.UNKNOWN]: verifyUnknownApiPool,
   [MinerApiType.ANTMINER]: verifyAntminerPool,
@@ -76,7 +76,9 @@ async function switchUnknownPool(params: SwitchPoolParams): Promise<any> {
   throw Error(`Invalid Miner API supplied. Params: ${prettyFormat(params)}`);
 }
 
-async function verifyUnknownApiPool(params: VerifyPoolParams): Promise<any> {
+async function verifyUnknownApiPool(
+  params: VerifyOperationsParams
+): Promise<any> {
   throw Error(`Invalid Miner API supplied. Params: ${prettyFormat(params)}`);
 }
 

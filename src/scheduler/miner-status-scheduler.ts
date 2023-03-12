@@ -13,16 +13,18 @@ import FacilityInfoService from "@/services/facility-info.service";
 import { jobErrorCatcher } from "./job-error-catcher";
 import {
   FAN_SPEED_VERIFICATION_FUNCTION,
-  HASHRATE_VERIFICATION_FUNCTION,
+  HASHRATE_VERIFICATION_FUNCTION as MINER_HASHRATE_VERIFICATION_FUNCTION,
   POOL_VERIFICATION_FUNCTION,
   TEMPERATURE_VERIFICATION_FUNCTION,
-} from "@/poolswitch/miner-operation-maps";
+} from "@/poolswitch/maps-of-miner-commands";
+import { HASHRATE_VERIFICATION_FUNCTION as POOL_HASHRATE_VERIFICATION_FUNCTION } from "@/poolswitch/maps-of-pool-commands";
 import { MinerNetworkStatus } from "@/interfaces/miner.interface";
 import {
   sendMinerOfflineNotification,
   sendMinerOnlineNotification,
 } from "@/alerts/notifications";
 import { format as prettyFormat } from "pretty-format";
+import { MinerIntakeStage } from "@/interfaces/contract.interface";
 
 const JOB_NAMES = {
   STATUS_PROBE: "Track Miner Status",
@@ -48,7 +50,6 @@ class MinerStatusScheduler {
   private contractService = new ContractService();
   private minerService = new MinerService();
   private facilityInfoService = new FacilityInfoService();
-  private poolSwitchScheduler = PoolSwitchScheduler.get();
   private isSchedulerStarted = false;
 
   static get(): MinerStatusScheduler {
@@ -74,7 +75,6 @@ class MinerStatusScheduler {
           return;
         }
 
-        // Do not ping a miner if it's being switched. Need to also handle company miners.
         const miners = (await this.minerService.findAllMiners()).filter(
           (miner) => !miner.status.poolIsBeingSwitched
         );
@@ -83,16 +83,28 @@ class MinerStatusScheduler {
           const contract = await this.contractService.findContractByMiner({
             minerId: miner._id,
           });
+
+          if (
+            contract.minerIntakeStage != MinerIntakeStage.SUCCESSFULLY_INTOOK
+          ) {
+            continue;
+          }
+
           const pools = contract.hostingContract.poolMiningOptions;
           const activePoolIndex = contract.poolActivity.expectedActivePoolIndex;
-          const checkHashRate = HASHRATE_VERIFICATION_FUNCTION[miner.API];
+          const activePool = pools[activePoolIndex].pool;
+          const checkPoolReceivedHashRate =
+            POOL_HASHRATE_VERIFICATION_FUNCTION[activePool.poolType];
+          const checkMinerHashRate =
+            MINER_HASHRATE_VERIFICATION_FUNCTION[miner.API];
           const checkTemperature = TEMPERATURE_VERIFICATION_FUNCTION[miner.API];
           const checkFanSpeed = FAN_SPEED_VERIFICATION_FUNCTION[miner.API];
           const checkPoolStatus = POOL_VERIFICATION_FUNCTION[miner.API];
           const previousStatus = miner.status.networkStatus;
 
-          await checkPoolStatus({ miner, pool: pools[activePoolIndex].pool })
-            .then(() => checkHashRate(miner))
+          await checkPoolReceivedHashRate({ miner, pool: activePool })
+            .then(() => checkPoolStatus({ miner, pool: activePool }))
+            .then(() => checkMinerHashRate(miner))
             .then(() => checkFanSpeed(miner))
             .then(() => checkTemperature(miner))
             .then(() => {

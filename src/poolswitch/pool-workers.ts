@@ -1,5 +1,5 @@
 import { PoolPurposeType } from "@/interfaces/pool.interface";
-import { SwitchPoolParams, VerifyPoolParams } from "./common-types";
+import { SwitchPoolParams, VerifyOperationsParams } from "./common-types";
 
 export const CLIENT_WORKER_PREFIX = "cl";
 
@@ -8,7 +8,7 @@ export const COMPANY_FEE_WORKER_PREFIX = "co_fee";
 export const COMPANY_FULL_TIME_WORKER_PREFIX = "co";
 
 export function getPoolWorker(
-  switchPoolInfo: SwitchPoolParams | VerifyPoolParams
+  switchPoolInfo: SwitchPoolParams | VerifyOperationsParams
 ) {
   const purpose = switchPoolInfo.pool.purpose;
   const friendlyMinerId = switchPoolInfo.miner.friendlyMinerId;

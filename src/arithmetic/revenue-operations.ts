@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Revenue } from "../performance/revenue.interface";
+import { Revenue } from "../interfaces/performance/revenue.interface";
 
 const INCONGRUENT_COIN_TYPE_MSG = "Revenue coinTypes must be equal.";
 
@@ -8,6 +8,10 @@ export function revenueSum(augend: Revenue, addend: Revenue) {
     augend.coinType == addend.coinType,
     generateCoinTypeError(augend.coinType, addend.coinType)
   );
+  return {
+    amount: augend.amount + addend.amount,
+    coinType: augend.coinType,
+  };
 }
 
 export function revenueDifference(minuend: Revenue, subtrahend: Revenue) {

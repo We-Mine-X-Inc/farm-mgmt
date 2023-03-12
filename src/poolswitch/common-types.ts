@@ -6,7 +6,7 @@ export type SwitchPoolParams = {
   pool: Pool;
 };
 
-export type VerifyPoolParams = {
+export type VerifyOperationsParams = {
   miner: Miner;
   pool: Pool;
 };

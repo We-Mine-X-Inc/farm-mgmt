@@ -11,7 +11,7 @@ import { PoolRevenue } from "@/interfaces/pool-revenue.interface";
 import { PoolWorkerHashRateContribution } from "@/interfaces/pool-worker-hash-rate-contribution.interface";
 import PoolRevenueService from "./pool-revenue.service";
 import { Revenue } from "@/interfaces/performance/revenue.interface";
-import { revenueDifference } from "@/interfaces/operations/revenue-operations";
+import { revenueDifference, revenueSum } from "@/arithmetic/revenue-operations";
 import { ONE_HOUR_IN_MILLIS } from "@/constants/time";
 import { CoinType } from "@/interfaces/coin-market-info.interface";
 import { HashRateUnitType } from "@/interfaces/performance/hash-rate.interface";
@@ -39,80 +39,11 @@ class MinerPerformanceService {
   private poolWorkerHashRateContributionService =
     new PoolWorkerHashRateContributionService();
 
-  public async getHashRateForMiner(
-    request: MinerPerformanceRequestDto
-  ): Promise<MinerPerformanceResponseDto> {
-    const timeRange = request.timeRange;
-    const contract = await this.contractService.findContractByMiner({
-      minerId: request.minerId,
-    });
-    const poolUsernames = new Set(
-      contract.hostingContract.poolMiningOptions.map(
-        (poolOption) => poolOption.pool.username
-      )
-    );
-    console.log("poolUsername");
-    console.log(prettyFormat(poolUsernames));
-
-    const recordedWorkerContributionsByPool =
-      await this.retievePoolContributions({
-        timeRange: request.timeRange,
-        poolUsernames,
-      });
-    console.log("recordedWorkerContributionsByPool");
-    console.log(prettyFormat(recordedWorkerContributionsByPool));
-
-    const recordedWorkerContributionsByWorker =
-      this.flattenPoolToWorkerContributions(
-        recordedWorkerContributionsByPool.poolWorkerContributions
-      );
-    console.log("recordedWorkerContributionsByWorker");
-    console.log(prettyFormat(recordedWorkerContributionsByWorker));
-
-    const workersForMinerNonZeroContributions =
-      recordedWorkerContributionsByWorker.filter(
-        (workerContribution) =>
-          workerContribution.hashRate.quantity > 0 &&
-          workerContribution.workerName
-            .toString()
-            .includes(contract.miner.friendlyMinerId)
-      );
-    console.log("workersForMinerNonZeroContributions");
-    console.log(prettyFormat(workersForMinerNonZeroContributions));
-
-    const workerContributionsWithinTimeRange =
-      this.truncateWorkerContributionsWithinTimeRange({
-        timeRange,
-        workerContributions: workersForMinerNonZeroContributions,
-      });
-    console.log("workerContributionsWithinTimeRange");
-    console.log(prettyFormat(workerContributionsWithinTimeRange));
-
-    const summedMinerHashRate = workerContributionsWithinTimeRange.reduce(
-      (summedHashRate, workerContribution) =>
-        summedHashRate + workerContribution.hashRate.quantity,
-      0
-    );
-    console.log("summedMinerHashRate");
-    console.log(prettyFormat(summedMinerHashRate));
-
-    const averageHashRateQuantity =
-      summedMinerHashRate / workerContributionsWithinTimeRange.length;
-    console.log("averageHashRateQuantity");
-    console.log(prettyFormat(averageHashRateQuantity));
-
-    return {
-      miner: contract.miner,
-      timeRange: request.timeRange,
-      averageHashRate: {
-        // Expect all units to be the same
-        unit: workerContributionsWithinTimeRange[0].hashRate.unit,
-        quantity: averageHashRateQuantity,
-      },
-      contributionRatios: workerContributionsWithinTimeRange,
-    };
-  }
-
+  /**
+   * Returns performance metrics: earnings and hash rate contributions, for the specified miner.
+   * @param request
+   * @returns
+   */
   public async getEarningsForMiner(
     request: MinerPerformanceRequestDto
   ): Promise<MinerPerformanceResponseDto> {
@@ -130,17 +61,11 @@ class MinerPerformanceService {
     console.log(prettyFormat(poolUsernames));
 
     console.log("poolRevenues");
-    const unfilteredPoolRevenues = await this.retrievePoolRevenues({
+    const poolRevenues = await this.retrievePoolRevenues({
       timeRange,
       poolUsernames,
     });
-    const poolRevenues = unfilteredPoolRevenues.filter(
-      (poolRevenue) => poolRevenue.amount.coinType != CoinType.UNKNOWN
-    );
     console.log(prettyFormat(poolRevenues));
-    if (poolRevenues.length < 1) {
-      return this.getUnknownPerformance(contract.miner, request);
-    }
 
     console.log("recordedWorkerContributionsByPool");
     const recordedWorkerContributionsByPool =
@@ -172,8 +97,6 @@ class MinerPerformanceService {
       });
     console.log(prettyFormat(workerContributionsWithinTimeRange));
 
-    // group the pool wokers by pool
-    // sum(workerHashRate * timePortion * earningWithinTimeRange)
     console.log("groupedPoolContributions");
     const groupedPoolContributions = workerContributionsWithinTimeRange.reduce(
       (groupedContributions, contribution) => {
@@ -193,6 +116,8 @@ class MinerPerformanceService {
     const calculatedWorkerContributions = Object.entries(
       groupedPoolContributions
     ).flatMap(([poolUsername, groupedWorkerContributions]) => {
+      console.log(prettyFormat("poolRevenues"));
+      console.log(prettyFormat(poolRevenues));
       const totalPoolProfit = poolRevenues[poolUsername];
       return groupedWorkerContributions.workerContributions.map(
         (workerContribution) => {
@@ -216,8 +141,8 @@ class MinerPerformanceService {
 
     console.log("workerContributionsForMiner");
     const workerContributionsForMiner = calculatedWorkerContributions.filter(
-      async (workerContribution) =>
-        await workerContribution.workerName
+      (workerContribution) =>
+        workerContribution.workerName
           .toString()
           .includes(contract.miner.friendlyMinerId)
     );
@@ -245,24 +170,49 @@ class MinerPerformanceService {
     );
     console.log(prettyFormat(summedMinerHashRate));
 
-    console.log("averageHashRateQuantity");
-    const averageHashRateQuantity =
-      summedMinerHashRate / workerContributionsForMiner.length;
-    console.log(prettyFormat(averageHashRateQuantity));
+    console.log("averageHashRate");
+    const averageHashRate = this.calculateAverageHashRateForMiner({
+      miner: contract.miner,
+      workerContributions: workersWithNonZeroContributions,
+    });
+    console.log(prettyFormat(averageHashRate));
 
     return {
       miner: contract.miner,
       timeRange: request.timeRange,
-      averageHashRate: {
-        // Expect all units to be the same
-        unit: workerContributionsForMiner[0].hashRate.unit,
-        quantity: averageHashRateQuantity,
-      },
+      averageHashRate: averageHashRate,
       profits: {
         coinType: workerContributionsForMiner[0].profit.coinType,
         amount: summedProfits,
       },
       contributionRatios: workerContributionsForMiner,
+    };
+  }
+
+  private calculateAverageHashRateForMiner({
+    miner,
+    workerContributions,
+  }: {
+    miner: Miner;
+    workerContributions: FlattenedWorkerContribution[];
+  }) {
+    const workerContributionsForMiner = workerContributions.filter(
+      (workerContribution) =>
+        workerContribution.workerName.toString().includes(miner.friendlyMinerId)
+    );
+    const averageHashRate = workerContributionsForMiner.reduce(
+      (averageHashRate, workerContribution) => {
+        return (
+          averageHashRate +
+          workerContribution.hashRate.quantity /
+            workerContributionsForMiner.length
+        );
+      },
+      0
+    );
+    return {
+      unit: workerContributionsForMiner[0].hashRate.unit,
+      quantity: averageHashRate,
     };
   }
 
@@ -292,7 +242,7 @@ class MinerPerformanceService {
     timeRange: TimeRange;
     poolUsernames: Set<string>;
   }) {
-    return await Promise.all(
+    const poolRevenues = await Promise.all(
       Array.from(poolUsernames).map(async (poolUsername) => {
         const finalRevenue = await this.retrieveFinalRevenue({
           timeRange,
@@ -303,17 +253,21 @@ class MinerPerformanceService {
           poolUsername,
         });
 
-        const isRevenueUnknown =
-          finalRevenue.coinType == CoinType.UNKNOWN ||
-          startRevenue.coinType == CoinType.UNKNOWN;
+        // Need to ensure the storage job is setting the correct coinType before
+        // uncommenting this portion.
+        // const isRevenueUnknown =
+        //   finalRevenue.coinType == CoinType.UNKNOWN ||
+        //   startRevenue.coinType == CoinType.UNKNOWN;
         return {
           poolUsername,
-          amount: isRevenueUnknown
-            ? UNKNOWN_REVENUE
-            : revenueDifference(finalRevenue, startRevenue),
+          amount: revenueDifference(finalRevenue, startRevenue),
         };
       })
     );
+    return poolRevenues.reduce((usernameToRevenueMap, poolRevenue) => {
+      usernameToRevenueMap[poolRevenue.poolUsername] = poolRevenue.amount;
+      return usernameToRevenueMap;
+    }, {});
   }
 
   private async retrieveFinalRevenue({
@@ -323,13 +277,12 @@ class MinerPerformanceService {
     timeRange: TimeRange;
     poolUsername: string;
   }): Promise<Revenue> {
-    const poolRevenue = await this.poolRevenueService.getPoolRevenues({
+    const poolRevenuesResponse = await this.poolRevenueService.getPoolRevenues({
       timeSingleton: { timeInMillis: timeRange.endInMillis },
       poolUsernames: [poolUsername],
     });
-
-    return poolRevenue.poolRevenues[0]
-      ? poolRevenue.poolRevenues[0].cummulativeProfits
+    return poolRevenuesResponse.poolRevenues[0]
+      ? poolRevenuesResponse.poolRevenues[0].cummulativeProfits
       : UNKNOWN_REVENUE;
   }
 
@@ -340,15 +293,15 @@ class MinerPerformanceService {
     timeRange: TimeRange;
     poolUsername: string;
   }): Promise<Revenue> {
-    const poolRevenue = await this.poolRevenueService.getPoolRevenues({
+    const poolRevenuesResponse = await this.poolRevenueService.getPoolRevenues({
       timeSingleton: {
         timeInMillis: timeRange.startInMillis - ONE_HOUR_IN_MILLIS,
       },
       poolUsernames: [poolUsername],
     });
 
-    return poolRevenue.poolRevenues[0]
-      ? poolRevenue.poolRevenues[0].cummulativeProfits
+    return poolRevenuesResponse.poolRevenues[0]
+      ? poolRevenuesResponse.poolRevenues[0].cummulativeProfits
       : UNKNOWN_REVENUE;
   }
 
@@ -369,7 +322,7 @@ class MinerPerformanceService {
 
   private flattenPoolToWorkerContributions(
     poolContributions: PoolWorkerHashRateContribution[]
-  ) {
+  ): FlattenedWorkerContribution[] {
     return poolContributions.flatMap((workerContribution) => {
       const workers = {
         ...workerContribution.clientWorkers,
@@ -396,15 +349,24 @@ class MinerPerformanceService {
     return workerContributions.map((workerContribution) => {
       let calculatedHashRate = 0;
       let accountedTimeRange = workerContribution.timeRange;
-      const totalTimeRange =
+      const totalWorkedTimeRange =
         workerContribution.timeRange.endInMillis -
         workerContribution.timeRange.startInMillis;
       if (
+        workerContribution.timeRange.startInMillis < timeRange.startInMillis &&
+        workerContribution.timeRange.endInMillis > timeRange.endInMillis
+      ) {
+        // Requested TimeRange is between the retrieved contribution.
+        const timeRatio =
+          (timeRange.endInMillis - timeRange.startInMillis) /
+          totalWorkedTimeRange;
+      } else if (
         workerContribution.timeRange.startInMillis < timeRange.startInMillis
       ) {
+        // First contribution in the time series of retrieved contributions.
         const timeRatio =
           (workerContribution.timeRange.endInMillis - timeRange.startInMillis) /
-          totalTimeRange;
+          totalWorkedTimeRange;
         calculatedHashRate = timeRatio * workerContribution.hashRate.quantity;
         accountedTimeRange = {
           startInMillis: timeRange.startInMillis,
@@ -413,15 +375,17 @@ class MinerPerformanceService {
       } else if (
         timeRange.endInMillis < workerContribution.timeRange.endInMillis
       ) {
+        // Last contribution in the time series of retrieved contributions.
         const timeRatio =
           (timeRange.endInMillis - workerContribution.timeRange.startInMillis) /
-          totalTimeRange;
+          totalWorkedTimeRange;
         calculatedHashRate = timeRatio * workerContribution.hashRate.quantity;
         accountedTimeRange = {
           startInMillis: workerContribution.timeRange.startInMillis,
           endInMillis: timeRange.endInMillis,
         };
       } else {
+        // Middle contribution in the time series of retrieved contributions.
         calculatedHashRate = workerContribution.hashRate.quantity;
       }
       return {

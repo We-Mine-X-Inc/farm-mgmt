@@ -1,6 +1,6 @@
 const axios = require("axios").default;
 import { logger } from "@/utils/logger";
-import { SwitchPoolParams, VerifyPoolParams } from "./common-types";
+import { SwitchPoolParams, VerifyOperationsParams } from "./common-types";
 import { format as prettyFormat } from "pretty-format";
 import { Pool } from "@/interfaces/pool.interface";
 import { Miner } from "@/interfaces/miner.interface";
@@ -18,6 +18,7 @@ import {
   POOL_VERIFICATION_FAILURE_PREFIX,
 } from "./constants";
 import { getPoolWorker } from "./pool-workers";
+import { constructPoolUser } from "./pool-user";
 
 const NUMBERS_ONLY_REGEX = /\d+/g;
 
@@ -78,9 +79,9 @@ async function getSettings(
   });
 }
 
-function verifyMinerIsForClient<T extends SwitchPoolParams | VerifyPoolParams>(
-  params: T
-): MinerValidator {
+function verifyMinerIsForClient<
+  T extends SwitchPoolParams | VerifyOperationsParams
+>(params: T): MinerValidator {
   return (validationInfo: PoolValidationInfo) => {
     if (validationInfo.macAddress != params.miner.macAddress) {
       throw Error("Miner mismatch. The MAC does not match the expected IP.");
@@ -169,10 +170,6 @@ function constructPoolUrl(pool: Pool) {
   return `${pool.protocol}://${pool.domain}`;
 }
 
-function constructPoolUser(params: SwitchPoolParams | VerifyPoolParams) {
-  return `${params.pool.username}+pps.${getPoolWorker(params)}`;
-}
-
 export async function switchGoldshellPool(
   params: SwitchPoolParams
 ): Promise<any> {
@@ -192,7 +189,7 @@ export async function switchGoldshellPool(
 }
 
 export async function verifyGoldshellPool(
-  params: VerifyPoolParams
+  params: VerifyOperationsParams
 ): Promise<any> {
   return await loginToMiner(params.miner.ipAddress)
     .then(getSettings)
@@ -211,7 +208,7 @@ export async function verifyGoldshellPool(
     });
 }
 
-function verifyLivePoolStatus(verifyPoolParams: VerifyPoolParams) {
+function verifyLivePoolStatus(verifyPoolParams: VerifyOperationsParams) {
   return async (sessionInfo: SessionInfo) => {
     return await axios({
       method: "get",
