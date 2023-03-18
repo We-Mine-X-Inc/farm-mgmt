@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: .
-    destination: /home/ubuntu/applications/all-servers-temp
+    destination: /home/ubuntu/applications/all-composites-temp
 hooks:
   ApplicationStop:
     - location: aws/scripts/stop_server.sh

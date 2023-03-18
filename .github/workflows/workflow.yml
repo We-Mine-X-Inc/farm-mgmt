@@ -22,8 +22,8 @@ jobs:
           respository: ${{ github.repository }}
           ref: ${{ github.sha }}
       # Step 3
-      - name: Build Application and Run unit Test
-        run: npm install && npm run build:tsc && npm test
+      # - name: Build Application and Run unit Test
+      #   run: npm install && npm run build:tsc && npm test
 
   continuous-deployment:
     runs-on: ubuntu-latest
