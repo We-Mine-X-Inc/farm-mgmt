@@ -2,14 +2,14 @@
 
 # Verify npm is installed.
 npm -v
-if [ $? -eq 0 ]; then
+if [ $? -ne 0 ]; then
     echo "npm is not installed."
     exit 1;
 fi
 
 # Verify node is installed.
 node -v
-if [ $? -eq 0 ]; then
+if [ $? -ne 0 ]; then
     echo "node is not installed."
     exit 1;
 fi
