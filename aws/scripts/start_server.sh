@@ -1,25 +1,8 @@
 #!/bin/bash
 
-# Verify npm is installed.
-npm -v
-if [ $? -ne 0 ]; then
-    echo "npm is not installed."
-    exit 1;
-fi
-
-# Verify node is installed.
-node -v
-if [ $? -ne 0 ]; then
-    echo "node is not installed."
-    exit 1;
-fi
-
-# Verify pm2 is installed.
-npm list -g | grep pm2
-if [ $? -ne 0 ]; then
-    echo "PM2 does not exist."
-    exit 1;
-fi
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Parameters to be set before pushing to Github.
 USER=ubuntu
@@ -39,10 +22,6 @@ cp -r $INITIAL_PUSH_LOCATION/. $COMPOSITES_ENV_DIR/.
 
 # Copy environment specific config into directory.
 cp $CONFIG_LOCATION $COMPOSITES_ENV_DIR
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Move to the composite's directory and run the composite.
 cd $COMPOSITES_ENV_DIR
