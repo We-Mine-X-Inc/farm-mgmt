@@ -4,7 +4,7 @@
 # used immediately to stop the server currently in production, it is used for the current
 # and will therefore not be executed until the next push.
 
-SHOULD_STOP_COMPOSITE=false
+SHOULD_STOP_COMPOSITE=0 # 0 = false; 1 = true;
 LAUNCH_ENV=prod
 COMPOSITE_NAME=farm_mgmt_BE # Defined within ecosystem.config.js
 
@@ -20,7 +20,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Stop an existing composite job if necessary.
-if [ $SHOULD_STOP_COMPOSITE ]; then
+if [ $SHOULD_STOP_COMPOSITE -eq 1 ]; then
     # Delete the job named $PM2_JOB_NAME.
     npm list -g | grep pm2
     if [ $? -eq 0 ]; then

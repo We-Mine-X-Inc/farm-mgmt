@@ -16,9 +16,7 @@ fi
 
 # Verify pm2 is installed.
 npm list -g | grep pm2
-if [ $? -eq 0 ]; then
-    pm2 delete $PM2_JOB_NAME
-else
+if [ $? -ne 0 ]; then
     echo "PM2 does not exist."
     exit 1;
 fi
